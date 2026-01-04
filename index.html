@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
-    <title>Ultimate AI: v8</title>
+    <title>Ultimate AI: Dual Core</title>
     <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -14,23 +14,23 @@
     <style>
         :root { 
             --bg: #000; --sidebar: #0a0a0a; --surface: #141414; 
-            --border: #222; --accent: #2563eb; --text: #eee; --dim: #888;
+            --border: #222; --accent: #8b5cf6; /* Violet for Groq/HF feel */
+            --text: #eee; --dim: #888;
+            --success: #22c55e; --error: #ef4444;
         }
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         
         body { 
             margin: 0; background: var(--bg); color: var(--text); 
             font-family: -apple-system, sans-serif; 
-            display: flex; height: 100dvh; 
-            overflow: hidden; 
+            display: flex; height: 100dvh; overflow: hidden; 
         }
 
-        /* --- PULL TO REFRESH SPINNER --- */
+        /* --- PULL TO REFRESH --- */
         #ptr {
             position: absolute; top: 50px; left: 0; right: 0; height: 50px;
             display: flex; align-items: center; justify-content: center;
-            z-index: 10; pointer-events: none; opacity: 0;
-            transition: opacity 0.2s;
+            z-index: 10; pointer-events: none; opacity: 0; transition: opacity 0.2s;
         }
         .spinner {
             width: 20px; height: 20px; border: 2px solid #333; 
@@ -51,7 +51,6 @@
         .chat-item { padding: 12px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; color: var(--dim); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .chat-item.active { background: #1f1f1f; color: white; border: 1px solid #333; }
         
-        /* Mobile Sidebar */
         @media (max-width: 768px) {
             #sidebar { position: fixed; inset: 0 auto 0 0; width: 80%; transform: translateX(-100%); box-shadow: 10px 0 50px rgba(0,0,0,0.5); }
             #sidebar.open { transform: translateX(0); }
@@ -59,10 +58,9 @@
             .overlay.active { display: block; }
         }
 
-        /* --- MAIN CONTENT --- */
+        /* --- MAIN --- */
         #main { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; }
 
-        /* Header */
         header { 
             height: 50px; flex-shrink: 0; border-bottom: 1px solid var(--border); 
             display: flex; align-items: center; justify-content: space-between; padding: 0 15px; 
@@ -72,12 +70,9 @@
         @media (max-width: 768px) { .menu-btn { display: block; } }
         .persona-select { background: #111; border: 1px solid #333; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
 
-        /* Feed */
         #feed { 
-            flex: 1; overflow-y: auto; padding: 20px; 
-            display: flex; flex-direction: column; gap: 20px; 
-            overscroll-behavior-y: contain; /* Important for PTR */
-            position: relative;
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; 
+            overscroll-behavior-y: contain; position: relative;
         }
         .msg { max-width: 800px; margin: 0 auto; width: 100%; display: flex; gap: 12px; }
         .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; font-weight: bold; }
@@ -87,43 +82,26 @@
         pre { background: #111; padding: 12px; border-radius: 8px; border: 1px solid #333; overflow-x: auto; position: relative; margin: 10px 0; }
         .preview-btn { position: absolute; top: 10px; right: 10px; background: #222; border: 1px solid #444; color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
 
-        /* --- INPUT AREA (FIXED) --- */
-        .input-wrapper { 
-            flex-shrink: 0; background: var(--bg); border-top: 1px solid var(--border); 
-            padding: 10px 15px; padding-bottom: calc(10px + env(safe-area-inset-bottom));
-            z-index: 30;
-        }
-        .input-container { 
-            max-width: 800px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); 
-            border-radius: 20px; padding: 6px; display: flex; align-items: flex-end; gap: 8px; position: relative;
-        }
-        
-        .file-prev { 
-            position: absolute; bottom: 100%; left: 0; background: #222; padding: 8px 12px; 
-            border-radius: 8px 8px 0 0; border: 1px solid #333; border-bottom: none; 
-            margin-bottom: -1px; display: none; align-items: center; gap: 10px; font-size: 12px; z-index: 10;
-        }
-
-        textarea { 
-            flex: 1; background: transparent; border: none; color: white; 
-            padding: 10px 5px; font-family: inherit; font-size: 16px; 
-            max-height: 150px; min-height: 24px; overflow-y: auto; resize: none; 
-        }
-        
-        .icon-btn { 
-            width: 40px; height: 40px; border-radius: 50%; background: transparent; border: none; 
-            color: #888; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            flex-shrink: 0; 
-        }
+        /* --- INPUT --- */
+        .input-wrapper { flex-shrink: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 10px 15px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 30; }
+        .input-container { max-width: 800px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px; display: flex; align-items: flex-end; gap: 8px; position: relative; }
+        .file-prev { position: absolute; bottom: 100%; left: 0; background: #222; padding: 8px 12px; border-radius: 8px 8px 0 0; border: 1px solid #333; border-bottom: none; margin-bottom: -1px; display: none; align-items: center; gap: 10px; font-size: 12px; z-index: 10; }
+        textarea { flex: 1; background: transparent; border: none; color: white; padding: 10px 5px; font-family: inherit; font-size: 16px; max-height: 150px; min-height: 24px; overflow-y: auto; resize: none; }
+        .icon-btn { width: 40px; height: 40px; border-radius: 50%; background: transparent; border: none; color: #888; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .send-btn { background: white; color: black; }
 
         /* --- MODALS --- */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 200; align-items: center; justify-content: center; }
-        .settings-box { background: #141414; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; border: 1px solid #333; }
+        .settings-box { background: #141414; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; border: 1px solid #333; max-height: 90dvh; overflow-y: auto; }
+        
         .s-field { margin-bottom: 15px; }
-        .s-field label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        .s-field label { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
         .s-field input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; font-size: 14px; }
         
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #444; display: inline-block; }
+        .status-dot.ok { background: var(--success); box-shadow: 0 0 5px var(--success); }
+        .status-dot.err { background: var(--error); box-shadow: 0 0 5px var(--error); }
+
         #artifact-modal { flex-direction: column; background: #000; }
         .am-head { height: 50px; width: 100%; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: #111; }
         #artifact-frame { flex: 1; background: white; border: none; width: 100%; }
@@ -132,7 +110,6 @@
 <body>
 
     <div class="overlay" id="overlay" onclick="toggleSide()"></div>
-
     <div id="ptr"><div class="spinner" id="ptr-spinner"></div></div>
 
     <div id="sidebar">
@@ -165,13 +142,10 @@
                     <span id="fp-name">file</span>
                     <button onclick="clearFile()" style="background:none; border:none; color:#ff5555; font-weight:bold; cursor:pointer; padding:0 5px;">✕</button>
                 </div>
-
-                <input type="file" id="file-in" style="display:none" onchange="handleFile(this)">
-                <button class="icon-btn" onclick="document.getElementById('file-in').click()">📎</button>
+                <input type="file" id="file-in" accept="image/*" style="display:none" onchange="handleFile(this)">
+                <button class="icon-btn" onclick="document.getElementById('file-in').click()">📷</button>
                 <button class="icon-btn" onclick="toggleVoice()">🎙️</button>
-                
                 <textarea id="inp" rows="1" placeholder="Message..."></textarea>
-                
                 <button class="icon-btn send-btn" onclick="send()">➤</button>
             </div>
         </div>
@@ -187,19 +161,29 @@
 
     <div id="settings-modal" class="modal">
         <div class="settings-box">
-            <h2 style="margin-top:0; font-size:18px;">⚙️ API Settings</h2>
-            <div class="s-field"><label>Groq (Primary Text)</label><input type="password" id="k-groq" placeholder="gsk_..."></div>
-            <div class="s-field"><label>HuggingFace (Backup & Art)</label><input type="password" id="k-hf" placeholder="hf_..."></div>
-            <div class="s-field"><label>Gemini (Files & Backup)</label><input type="password" id="k-gem" placeholder="AIza..."></div>
+            <h2 style="margin-top:0; font-size:18px;">⚙️ Engines</h2>
             
-            <button onclick="saveKeys()" class="new-chat-btn" style="width:100%; margin:0;">Save & Close</button>
+            <div class="s-field">
+                <label>Groq API (Fast Chat) <span id="s-groq" class="status-dot"></span></label>
+                <input type="password" id="k-groq" placeholder="gsk_...">
+            </div>
+            <div class="s-field">
+                <label>HuggingFace API (Art/Vision) <span id="s-hf" class="status-dot"></span></label>
+                <input type="password" id="k-hf" placeholder="hf_...">
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="testConnections()" class="new-chat-btn" style="background:#444; margin:0;">Test Network</button>
+                <button onclick="saveKeys()" class="new-chat-btn" style="margin:0;">Save & Close</button>
+            </div>
+            <div id="test-log" style="font-size:11px; color:#888; margin-top:10px; font-family:monospace; white-space:pre-wrap;"></div>
         </div>
     </div>
 
     <script>
         // --- CORE STATE ---
         const state = {
-            keys: { gem: "", groq: "", hf: "" },
+            keys: { groq: "", hf: "" },
             chats: [], activeChatId: null, file: null,
             personas: {
                 helpful: "You are a helpful AI assistant.",
@@ -208,19 +192,16 @@
             }
         };
         const dom = { 
-            feed: document.getElementById('feed'), 
-            inp: document.getElementById('inp'), 
-            status: document.getElementById('status-text'),
-            ptr: document.getElementById('ptr'),
-            spinner: document.getElementById('ptr-spinner')
+            feed: document.getElementById('feed'), inp: document.getElementById('inp'), 
+            status: document.getElementById('status-text'), ptr: document.getElementById('ptr'), 
+            spinner: document.getElementById('ptr-spinner'), log: document.getElementById('test-log')
         };
 
         // --- INIT ---
         window.onload = () => {
-            let k = localStorage.getItem('uai_keys');
+            let k = localStorage.getItem('uai_keys_v10');
             if(k) {
                 state.keys = JSON.parse(k);
-                document.getElementById('k-gem').value = state.keys.gem;
                 document.getElementById('k-groq').value = state.keys.groq;
                 document.getElementById('k-hf').value = state.keys.hf;
             } else document.getElementById('settings-modal').style.display = 'flex';
@@ -232,57 +213,64 @@
             else loadChat(state.chats[0].id);
         };
 
-        // --- PULL TO REFRESH LOGIC ---
-        let touchStartY = 0;
-        let ptrActive = false;
-
-        dom.feed.addEventListener('touchstart', (e) => {
-            if (dom.feed.scrollTop === 0) {
-                touchStartY = e.touches[0].clientY;
-                ptrActive = true;
-            }
-        }, { passive: true });
-
+        // --- PULL TO REFRESH ---
+        let touchStartY = 0, ptrActive = false;
+        dom.feed.addEventListener('touchstart', (e) => { if (dom.feed.scrollTop === 0) { touchStartY = e.touches[0].clientY; ptrActive = true; } }, { passive: true });
         dom.feed.addEventListener('touchmove', (e) => {
             if (!ptrActive || dom.feed.scrollTop > 0) return;
-            const touchY = e.touches[0].clientY;
-            const pullDistance = touchY - touchStartY;
-
-            if (pullDistance > 0) {
-                // Visual Feedback
+            const pull = e.touches[0].clientY - touchStartY;
+            if (pull > 0) {
                 dom.ptr.style.opacity = '1';
-                // Rotate spinner based on pull distance
-                dom.spinner.style.transform = `rotate(${pullDistance * 2}deg)`;
-                
-                // Indicate threshold
-                if (pullDistance > 80) {
-                    dom.spinner.style.borderColor = '#2563eb'; // Blue when ready
-                    dom.spinner.style.borderTopColor = 'transparent';
-                }
+                dom.spinner.style.transform = `rotate(${pull * 2}deg)`;
+                if (pull > 80) { dom.spinner.style.borderColor = '#8b5cf6'; dom.spinner.style.borderTopColor = 'transparent'; }
             }
         }, { passive: true });
-
         dom.feed.addEventListener('touchend', (e) => {
             if (!ptrActive) return;
-            const touchEndY = e.changedTouches[0].clientY;
-            
-            if (touchEndY - touchStartY > 80 && dom.feed.scrollTop === 0) {
-                // Trigger Reload
-                dom.spinner.classList.add('spinning');
-                dom.status.innerText = "REFRESHING...";
+            if (e.changedTouches[0].clientY - touchStartY > 80 && dom.feed.scrollTop === 0) {
+                dom.spinner.classList.add('spinning'); dom.status.innerText = "REFRESHING...";
                 setTimeout(() => window.location.reload(), 500);
-            } else {
-                // Cancel
-                dom.ptr.style.opacity = '0';
-                dom.spinner.style.borderColor = '#333';
-                dom.spinner.style.borderTopColor = '#2563eb';
-            }
-            ptrActive = false;
-            touchStartY = 0;
+            } else { dom.ptr.style.opacity = '0'; dom.spinner.style.borderColor = '#333'; dom.spinner.style.borderTopColor = '#8b5cf6'; }
+            ptrActive = false; touchStartY = 0;
         });
 
+        // --- CONNECTION DOCTOR ---
+        async function testConnections() {
+            dom.log.innerText = "Testing connections...\n";
+            const keys = { 
+                groq: document.getElementById('k-groq').value.trim(),
+                hf: document.getElementById('k-hf').value.trim()
+            };
 
-        // --- SEND LOGIC ---
+            // 1. Test Groq
+            if(keys.groq) {
+                try {
+                    await fetch("https://api.groq.com/openai/v1/models", { headers: {Authorization: `Bearer ${keys.groq}`} });
+                    document.getElementById('s-groq').className = "status-dot ok";
+                    dom.log.innerText += "✅ Groq: Connected\n";
+                } catch(e) {
+                    document.getElementById('s-groq').className = "status-dot err";
+                    dom.log.innerText += "❌ Groq: Failed (Check Key)\n";
+                }
+            } else dom.log.innerText += "⚪ Groq: No Key\n";
+
+            // 2. Test HF
+            if(keys.hf) {
+                try {
+                    const r = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", { 
+                        method:"POST", headers: {Authorization: `Bearer ${keys.hf}`}, body: JSON.stringify({inputs:"test"}) 
+                    });
+                    if(r.ok || r.status === 503) { 
+                        document.getElementById('s-hf').className = "status-dot ok"; dom.log.innerText += "✅ HF: Connected\n";
+                    } else throw new Error(r.status);
+                } catch(e) {
+                    document.getElementById('s-hf').className = "status-dot err";
+                    dom.log.innerText += `❌ HF: Error ${e.message}\n`;
+                }
+            } else dom.log.innerText += "⚪ HF: No Key\n";
+        }
+
+        // --- SEND LOGIC (NO GEMINI) ---
         async function send() {
             const txt = dom.inp.value.trim();
             if(!txt && !state.file) return;
@@ -300,30 +288,22 @@
                 let resp = "", usedModel = "";
                 const sys = state.personas[document.getElementById('persona').value];
 
-                // A. ART
+                // A. ART (HF)
                 if(/^(draw|paint|generate)/i.test(txt) && !msg.file) {
-                    await generateArt(txt);
-                    document.getElementById(loaderId)?.remove();
-                    return;
+                    await generateArt(txt); document.getElementById(loaderId)?.remove(); return;
                 }
 
-                // B. FILES
+                // B. IMAGES (HF ONLY)
                 if(msg.file) {
-                    if(state.keys.gem) {
-                        try {
-                            dom.status.innerText = "READING FILE...";
-                            resp = await callGemini(txt, msg.file, sys); usedModel = "Gemini";
-                        } catch(e) {
-                            if(msg.file.type.startsWith('image/') && state.keys.hf) {
-                                dom.status.innerText = "FALLBACK TO HF...";
-                                resp = await callHFVision(txt, msg.file); usedModel = "HF Vision";
-                            } else throw e;
-                        }
-                    } else if(msg.file.type.startsWith('image/') && state.keys.hf) {
-                         resp = await callHFVision(txt, msg.file); usedModel = "HF Vision";
-                    } else throw new Error("Need Gemini Key (Files) or HF Key (Images)");
+                    if(msg.file.type.startsWith('image/') && state.keys.hf) {
+                         dom.status.innerText = "ANALYZING IMAGE...";
+                         resp = await callHFVision(txt, msg.file); 
+                         usedModel = "HF Vision";
+                    } else {
+                        throw new Error("Only Image uploads supported (Requires HuggingFace Key).");
+                    }
                 } 
-                // C. TEXT ONLY
+                // C. TEXT (Groq -> HF)
                 else {
                     if(state.keys.groq) {
                         try {
@@ -332,24 +312,15 @@
                         } catch(e) {
                             if(state.keys.hf) {
                                 dom.status.innerText = "FALLBACK TO HF...";
-                                try { resp = await callHFText(txt, sys); usedModel = "Zephyr"; } 
-                                catch(e2) {
-                                    if(state.keys.gem) { resp = await callGemini(txt, null, sys); usedModel = "Gemini"; } else throw e2;
-                                }
-                            } else if(state.keys.gem) {
-                                resp = await callGemini(txt, null, sys); usedModel = "Gemini";
+                                resp = await callHFText(txt, sys); usedModel = "Zephyr (Backup)"; 
                             } else throw e;
                         }
                     } else if(state.keys.hf) {
                         resp = await callHFText(txt, sys); usedModel = "Zephyr";
-                    } else if(state.keys.gem) {
-                        resp = await callGemini(txt, null, sys); usedModel = "Gemini";
-                    } else throw new Error("No Text API Keys");
+                    } else throw new Error("No API Keys configured. Please add Groq or HF.");
                 }
-
                 document.getElementById(loaderId)?.remove();
                 addMsg({ role: 'ai', content: resp + `\n\n*<small style="color:#555">Model: ${usedModel}</small>*` });
-
             } catch(e) {
                 document.getElementById(loaderId)?.remove();
                 addMsg({ role: 'ai', content: "⚠️ Error: " + e.message });
@@ -364,7 +335,7 @@
                 method: "POST", headers: {Authorization: `Bearer ${state.keys.groq}`, "Content-Type":"application/json"},
                 body: JSON.stringify({model: "llama-3.3-70b-versatile", messages: [{role:"system", content:sys}, ...hist]})
             });
-            if(!res.ok) throw new Error("Groq Error");
+            if(!res.ok) throw new Error("Groq Error " + res.status);
             return (await res.json()).choices[0].message.content;
         }
 
@@ -374,19 +345,8 @@
                 method: "POST", headers: {Authorization: `Bearer ${state.keys.hf}`, "Content-Type":"application/json"},
                 body: JSON.stringify({inputs: prompt, parameters: {max_new_tokens: 512, return_full_text: false}})
             });
-            if(!res.ok) throw new Error("HF Text Error");
-            const d = await res.json();
-            return d[0].generated_text;
-        }
-
-        async function callGemini(txt, file, sys) {
-            let parts = [{text: sys + "\n\nUser: " + (txt||"Describe this")}];
-            if(file) parts.push({ inlineData: { mimeType: file.type, data: file.data.split(',')[1] } });
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.keys.gem}`, {
-                method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ contents: [{ parts: parts }] })
-            });
-            if(!res.ok) throw new Error("Gemini Error");
-            return (await res.json()).candidates[0].content.parts[0].text;
+            if(!res.ok) throw new Error("HF Text Error " + res.status);
+            return (await res.json())[0].generated_text;
         }
 
         async function callHFVision(txt, file) {
@@ -394,7 +354,7 @@
                 method: "POST", headers: { Authorization: `Bearer ${state.keys.hf}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ inputs: { image: file.data.split(',')[1], question: txt || "Describe image" } })
             });
-            if(!res.ok) throw new Error("HF Vision Error");
+            if(!res.ok) throw new Error("HF Vision Error " + res.status);
             const d = await res.json();
             return d[0]?.answer ? `**Analysis:** ${d[0].answer} (${Math.round(d[0].score*100)}%)` : "Could not analyze.";
         }
@@ -405,6 +365,7 @@
                 method: "POST", headers: {Authorization: `Bearer ${state.keys.hf}`, "Content-Type":"application/json"},
                 body: JSON.stringify({inputs: txt.replace(/^(draw|paint|generate)\s/i, '')})
             });
+            if(!res.ok) throw new Error("Art Error " + res.status);
             const url = URL.createObjectURL(await res.blob());
             addMsg({ role: 'ai', content: `![Art](${url})` });
         }
@@ -440,17 +401,8 @@
             r.readAsDataURL(f);
         }
         function clearFile() { state.file = null; document.getElementById('file-prev').style.display='none'; }
-        
-        function newChat() {
-            const id = Date.now().toString(); state.chats.unshift({id, title:"New Chat", msgs:[]});
-            loadChat(id); if(window.innerWidth<768) toggleSide();
-        }
-        function loadChat(id) {
-            state.activeChatId = id; dom.feed.innerHTML = '';
-            const chat = state.chats.find(c => c.id === id);
-            chat.msgs.forEach(m => addMsgToFeedOnly(m));
-            renderChatList();
-        }
+        function newChat() { const id = Date.now().toString(); state.chats.unshift({id, title:"New Chat", msgs:[]}); loadChat(id); if(window.innerWidth<768) toggleSide(); }
+        function loadChat(id) { state.activeChatId = id; dom.feed.innerHTML = ''; const chat = state.chats.find(c => c.id === id); chat.msgs.forEach(m => addMsgToFeedOnly(m)); renderChatList(); }
         function addMsgToFeedOnly(msg) {
              const div = document.createElement('div'); div.className = "msg";
              let c = msg.file ? (msg.file.type.includes('image') ? `<img src="${msg.file.data}" style="max-width:200px;border-radius:10px;margin-bottom:10px;display:block">` : `<div style="background:#222;padding:5px 10px;border-radius:5px;margin-bottom:5px;display:inline-block">📄 ${msg.file.name}</div>`) : "";
@@ -459,31 +411,16 @@
              dom.feed.appendChild(div);
              div.querySelectorAll('pre code').forEach(b => { hljs.highlightElement(b); });
         }
-
-        function renderChatList() {
-            const l = document.getElementById('chat-list'); l.innerHTML = '';
-            state.chats.forEach(c => {
-                const d = document.createElement('div'); d.className = `chat-item ${c.id === state.activeChatId ? 'active' : ''}`;
-                d.innerHTML = `<span>${c.title}</span><span onclick="delChat('${c.id}', event)" style="float:right; opacity:0.5">✕</span>`;
-                d.onclick = (e) => { if(e.target.tagName!=='SPAN') loadChat(c.id); };
-                l.appendChild(d);
-            });
-        }
+        function renderChatList() { const l = document.getElementById('chat-list'); l.innerHTML = ''; state.chats.forEach(c => { const d = document.createElement('div'); d.className = `chat-item ${c.id === state.activeChatId ? 'active' : ''}`; d.innerHTML = `<span>${c.title}</span><span onclick="delChat('${c.id}', event)" style="float:right; opacity:0.5">✕</span>`; d.onclick = (e) => { if(e.target.tagName!=='SPAN') loadChat(c.id); }; l.appendChild(d); }); }
         function delChat(id, e) { e.stopPropagation(); if(confirm("Delete?")) { state.chats=state.chats.filter(c=>c.id!==id); if(state.chats.length===0) newChat(); else loadChat(state.chats[0].id); saveData(); } }
-        
         function getLastMsgs() { const c = state.chats.find(x=>x.id===state.activeChatId); return c.msgs.slice(-6).map(m=>({role:m.role==='user'?'user':'assistant', content:m.content||"[File]"})); }
         function saveData() { localStorage.setItem('uai_chats', JSON.stringify(state.chats)); }
-        function saveKeys() { state.keys={gem:document.getElementById('k-gem').value, groq:document.getElementById('k-groq').value, hf:document.getElementById('k-hf').value}; localStorage.setItem('uai_keys', JSON.stringify(state.keys)); document.getElementById('settings-modal').style.display='none'; }
+        function saveKeys() { state.keys={groq:document.getElementById('k-groq').value.trim(), hf:document.getElementById('k-hf').value.trim()}; localStorage.setItem('uai_keys_v10', JSON.stringify(state.keys)); document.getElementById('settings-modal').style.display='none'; }
         function openSettings() { document.getElementById('settings-modal').style.display='flex'; }
         function toggleSide() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('active'); }
         function scrollToBottom() { dom.feed.scrollTop = dom.feed.scrollHeight; }
         function toggleVoice() { const r = new webkitSpeechRecognition(); r.onresult = e => dom.inp.value += e.results[0][0].transcript; r.start(); }
-        
-        // AUTO-SCALE TEXTAREA
-        dom.inp.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-        });
+        dom.inp.addEventListener('input', function(){ this.style.height='auto'; this.style.height= Math.min(this.scrollHeight, 150)+'px'; });
     </script>
 </body>
 </html>
