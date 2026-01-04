@@ -2,197 +2,241 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#000000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#09090b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Ultimate AI</title>
+    <title>Ultimate AI Pro</title>
     
     <link rel="manifest" href="manifest.json">
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
 
     <style>
-        /* --- MODERN VARIABLES --- */
+        /* --- PREMIUM VARIABLES --- */
         :root {
-            --bg: #050505;
-            --panel: rgba(20, 20, 20, 0.7);
-            --user-bubble: #2563eb; /* Blue */
-            --ai-bubble: #1f1f1f;
-            --accent: #00ff88;
-            --text: #ececec;
-            --dim: #888;
-            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --bg: #09090b; /* Zinc-950 */
+            --header-bg: rgba(9, 9, 11, 0.85);
+            --surface: #18181b; /* Zinc-900 */
+            --border: #27272a; /* Zinc-800 */
+            --user-bubble: #2563eb; /* Blue-600 */
+            --ai-bubble: #18181b;
+            --accent: #10b981; /* Emerald-500 */
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
             --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
         body {
             background-color: var(--bg);
-            color: var(--text);
-            font-family: var(--font);
+            color: var(--text-main);
+            font-family: var(--font-stack);
             margin: 0;
-            height: 100dvh; /* Dynamic Height */
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            font-size: 16px;
         }
 
-        /* --- HEADER (GLASS) --- */
+        /* --- HEADER --- */
         header {
-            position: absolute; top: 0; left: 0; right: 0;
             height: 60px;
             padding: 0 20px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: var(--header-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 100;
+            z-index: 50;
+            position: absolute; top: 0; width: 100%;
         }
 
-        .brand { font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
-        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); transition: 0.3s; }
-        .status { font-size: 11px; color: var(--dim); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+        .brand { 
+            font-weight: 700; 
+            font-size: 17px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            letter-spacing: -0.02em; 
+        }
+
+        .status-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            transition: 0.3s;
+        }
+
+        .action-icon { opacity: 0.6; cursor: pointer; transition: 0.2s; font-size: 18px; }
+        .action-icon:hover { opacity: 1; transform: scale(1.1); }
 
         /* --- CHAT FEED --- */
         #feed {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 80px 15px 20px 15px; /* Top padding clears header */
+            overflow-y: scroll;
+            padding: 80px 16px 20px 16px;
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 24px;
             scroll-behavior: smooth;
         }
 
         /* MESSAGES */
-        .msg-row { display: flex; width: 100%; }
+        .msg-row { display: flex; width: 100%; opacity: 0; animation: fadeUp 0.4s forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .u-row { justify-content: flex-end; }
         .a-row { justify-content: flex-start; }
 
         .msg {
-            max-width: 88%;
-            padding: 12px 16px;
+            max-width: 90%;
+            padding: 12px 18px;
             border-radius: 18px;
             font-size: 15px;
-            line-height: 1.5;
+            line-height: 1.6;
             position: relative;
-            word-wrap: break-word;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
+        /* User Bubble */
         .u-msg { 
             background: var(--user-bubble); 
             color: #fff; 
-            border-bottom-right-radius: 4px; 
+            border-bottom-right-radius: 4px;
         }
-        
+
+        /* AI Bubble */
         .a-msg { 
             background: var(--ai-bubble); 
-            color: #eee; 
+            color: var(--text-main); 
             border-bottom-left-radius: 4px; 
-            border: 1px solid #333;
+            border: 1px solid var(--border);
         }
 
-        /* --- MARKDOWN & CODE BLOCKS --- */
+        /* --- MARKDOWN STYLING --- */
+        .msg p { margin: 0 0 10px 0; }
+        .msg p:last-child { margin: 0; }
+        
+        .msg strong { color: #fff; font-weight: 600; }
+        .msg ul, .msg ol { margin: 8px 0; padding-left: 20px; color: var(--text-muted); }
+        .msg li { margin-bottom: 4px; }
+
+        /* Code Block "Mac Window" Style */
         .msg pre { 
-            background: #111 !important; 
-            border-radius: 8px; 
-            margin: 10px 0; 
-            position: relative; 
+            background: #0d0d0d !important; 
+            border-radius: 12px; 
+            margin: 12px 0; 
             border: 1px solid #333;
-            overflow: hidden; /* Contains the scroll */
+            overflow: hidden;
         }
         
-        .msg code { 
-            font-family: 'Fira Code', 'Consolas', monospace; 
-            font-size: 13px; 
+        .code-header {
+            background: #1f1f1f;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
         }
+
+        .dots { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+
+        .copy-btn {
+            background: transparent; border: none; color: #888;
+            font-size: 11px; font-weight: 600; cursor: pointer;
+            transition: 0.2s;
+        }
+        .copy-btn:hover { color: #fff; }
+
+        .msg code { font-family: 'SF Mono', Consolas, monospace; font-size: 13px; }
+        .msg pre > code { display: block; padding: 12px; overflow-x: auto; background: transparent; }
         
-        /* Inline code */
+        /* Inline Code */
         .msg :not(pre) > code {
             background: rgba(255,255,255,0.1);
-            padding: 2px 5px;
-            border-radius: 4px;
-            color: #ff79c6;
+            padding: 2px 6px;
+            border-radius: 6px;
+            color: #fbbf24; /* Amber */
         }
 
-        .msg p { margin: 0 0 8px 0; }
-        .msg p:last-child { margin: 0; }
-        .msg ul, .msg ol { margin: 5px 0; padding-left: 20px; }
-        .msg img.art-result { width: 100%; border-radius: 12px; margin-top: 5px; border: 1px solid #444; }
-
-        /* Copy Button */
-        .copy-btn {
-            position: absolute; top: 5px; right: 5px;
-            background: rgba(255,255,255,0.1);
-            border: none; color: #aaa;
-            padding: 4px 8px; border-radius: 4px;
-            font-size: 10px; cursor: pointer;
-            z-index: 5;
-        }
-        .copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        /* Images */
+        .art-wrapper { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-top: 8px; }
+        .art-result { width: 100%; display: block; aspect-ratio: 1/1; object-fit: cover; }
+        .art-tag { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; padding: 4px 8px; border-radius: 4px; backdrop-filter: blur(4px); }
 
         /* --- INPUT AREA --- */
         .input-container {
             background: var(--bg);
-            border-top: 1px solid #222;
-            padding: 10px 15px;
-            padding-bottom: calc(10px + var(--safe-bottom));
+            border-top: 1px solid var(--border);
+            padding: 12px 16px;
+            padding-bottom: calc(12px + var(--safe-bottom));
             display: flex;
             align-items: flex-end;
-            gap: 10px;
-            flex-shrink: 0;
-            z-index: 100;
+            gap: 12px;
+            z-index: 50;
         }
+
+        .textarea-wrapper {
+            flex: 1;
+            position: relative;
+            background: var(--surface);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            transition: border 0.2s;
+        }
+        .textarea-wrapper:focus-within { border-color: #555; }
 
         textarea {
-            flex: 1;
-            background: #161616;
-            border: 1px solid #333;
+            width: 100%;
+            background: transparent;
+            border: none;
             color: #fff;
-            border-radius: 20px;
-            padding: 12px 15px;
+            padding: 14px 16px;
             font-size: 16px;
             line-height: 1.4;
-            max-height: 120px;
+            max-height: 150px;
             resize: none;
-            outline: none;
-            transition: border 0.2s;
             font-family: inherit;
+            border-radius: 24px;
         }
-        textarea:focus { border-color: #555; }
 
         #send-btn {
-            width: 45px; height: 45px;
+            width: 48px; height: 48px;
             border-radius: 50%;
-            background: var(--text);
+            background: #fff;
             color: #000;
             border: none;
             display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
             cursor: pointer;
             flex-shrink: 0;
-            transition: 0.2s;
+            transition: transform 0.2s, background 0.2s;
         }
-        #send-btn:active { transform: scale(0.9); background: var(--accent); }
-        #send-btn:disabled { background: #333; color: #555; cursor: default; }
+        #send-btn svg { width: 20px; height: 20px; fill: currentColor; margin-left: 2px; }
+        #send-btn:active { transform: scale(0.92); }
+        #send-btn:disabled { background: var(--surface); color: #555; cursor: not-allowed; }
 
-        /* --- LOADING DOTS --- */
-        .typing { display: flex; gap: 4px; padding: 5px 0; }
-        .typing span { width: 6px; height: 6px; background: #666; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
-        .typing span:nth-child(1) { animation-delay: -0.32s; }
-        .typing span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        /* --- LOADING ANIMATION --- */
+        .typing-indicator { display: flex; gap: 5px; padding: 4px 0; }
+        .typing-indicator span { width: 6px; height: 6px; background: #555; border-radius: 50%; animation: pulse 1s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
 
     </style>
 </head>
@@ -200,64 +244,71 @@
 
     <header>
         <div class="brand">
-            <div class="dot" id="status-dot"></div>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12 2.1 12a10.1 10.1 0 0 0 9.9 10C12 22 22 12 12 12z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path></svg>
             <span>Ultimate AI</span>
         </div>
-        <div class="status" id="status-text">ONLINE</div>
-        <div style="font-size:12px; opacity:0.5; margin-left:10px; cursor:pointer" onclick="clearChat()">🗑️</div>
+        <div id="status-badge" class="status-badge">READY</div>
+        <div class="action-icon" onclick="clearChat()" title="Reset Chat">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </div>
     </header>
 
     <div id="feed">
         <div class="msg-row a-row">
             <div class="msg a-msg">
-                <p>Hello! I am upgraded. I can remember context, write colored code, and generate art.</p>
-                <p><i>Try: "Draw a futuristic city" or "Write a Python calculator".</i></p>
+                <p><strong>System Online.</strong></p>
+                <p>I am connected to Groq (Llama3), Gemini, and Flux (Art). How can I assist you with your projects today?</p>
             </div>
         </div>
     </div>
 
     <div class="input-container">
-        <textarea id="inp" rows="1" placeholder="Ask anything..."></textarea>
-        <button id="send-btn">➤</button>
+        <div class="textarea-wrapper">
+            <textarea id="inp" rows="1" placeholder="Ask a question or 'Draw...'"></textarea>
+        </div>
+        <button id="send-btn">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/></svg>
+        </button>
     </div>
 
     <script src="env.js"></script>
 
     <script>
-        // --- 1. STATE & SETUP ---
+        // --- CONFIGURATION ---
         const dom = {
             inp: document.getElementById('inp'),
             btn: document.getElementById('send-btn'),
             feed: document.getElementById('feed'),
-            statusText: document.getElementById('status-text'),
-            statusDot: document.getElementById('status-dot')
+            badge: document.getElementById('status-badge')
         };
 
+        let chatHistory = [];
         let KEYS = {};
-        // Memory Array for Context (Last 10 messages)
-        let chatHistory = []; 
 
-        // Validate Env
-        if (typeof CONFIG === 'undefined') {
-            addMessage("⚠️ CRITICAL: `env.js` is missing.", 'ai');
-            dom.btn.disabled = true;
-        } else {
-            KEYS = CONFIG;
-        }
+        // --- INIT CHECK ---
+        window.onload = () => {
+            if (typeof CONFIG === 'undefined') {
+                addMessage("⚠️ **System Error**: `env.js` is missing. Please create it with your API keys.", 'ai');
+                dom.btn.disabled = true;
+                setStatus("ERROR", "red");
+            } else {
+                KEYS = CONFIG;
+                dom.inp.focus();
+            }
+        };
 
-        // Configure Marked.js for Code Highlights
         marked.setOptions({
-            highlight: function(code, lang) {
+            highlight: (code, lang) => {
                 const language = highlight.getLanguage(lang) ? lang : 'plaintext';
                 return highlight.highlight(code, { language }).value;
             },
             langPrefix: 'hljs language-'
         });
 
-        // --- 2. EVENT LISTENERS ---
+        // --- EVENT LISTENERS ---
         dom.inp.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
         });
 
         dom.inp.addEventListener('keydown', (e) => {
@@ -266,148 +317,115 @@
 
         dom.btn.addEventListener('click', handleSend);
 
-        // --- 3. MAIN LOGIC ---
+        // --- CORE LOGIC ---
         async function handleSend() {
             const text = dom.inp.value.trim();
             if (!text) return;
 
-            // UI Updates
             addMessage(text, 'user');
             dom.inp.value = '';
             dom.inp.style.height = 'auto';
             dom.inp.focus();
 
-            // Check Art Trigger
+            // Detect Art Intent
             const lower = text.toLowerCase();
-            const artPrefixes = ['draw', 'paint', 'image', 'generate', 'lukis', 'gambar'];
-            const isArt = artPrefixes.some(p => lower.startsWith(p + ':') || lower.startsWith(p + ' '));
+            const artTrigger = /^(draw|image|generate|paint|lukis)\s/i.test(lower);
 
-            if (isArt) {
-                setStatus("CREATING ART", "#d946ef");
+            if (artTrigger) {
+                setStatus("PAINTING...", "#d946ef"); // Pink for art
                 await generateArt(text);
             } else {
-                setStatus("THINKING", "#00ff88");
-                // Create a temporary loading bubble
+                setStatus("THINKING...", "#fbbf24"); // Amber for thinking
                 const loaderId = addLoader();
-                
+
                 // Add to history
                 chatHistory.push({ role: "user", content: text });
-                
-                // Try Groq first (Faster)
+
+                // Try Groq -> Fallback Gemini
                 let response = await callGroq();
-                
-                // Fallback to Gemini if Groq fails
                 if (!response) {
-                    setStatus("SWITCHING ENGINE", "#f59e0b");
+                    setStatus("REROUTING...", "#f97316"); // Orange
                     response = await callGemini();
                 }
 
-                // Remove loader and show result
                 removeLoader(loaderId);
                 
                 if (response) {
                     addMessage(response, 'ai');
                     chatHistory.push({ role: "assistant", content: response });
-                    trimHistory();
+                    if(chatHistory.length > 20) chatHistory.splice(0, 2); // Keep context small
                 } else {
-                    addMessage("⚠️ All systems busy or offline.", 'ai');
+                    addMessage("I'm sorry, my servers are currently unresponsive.", 'ai');
                 }
             }
-            setStatus("ONLINE", "#00ff88");
+            setStatus("READY", "#10b981");
         }
 
-        // --- 4. API ENGINES ---
-        
-        // Engine A: Groq (Llama 3) - Supports System Prompt & History
+        // --- API 1: GROQ ---
         async function callGroq() {
             try {
-                // Format history for Groq
                 const messages = [
-                    { role: "system", content: "You are a helpful, expert AI assistant. Use Markdown. Be concise." },
+                    { role: "system", content: "You are an expert AI developer assistant. Be concise, professional, and use Markdown." },
                     ...chatHistory
                 ];
-
                 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
-                    headers: { 
-                        "Authorization": `Bearer ${KEYS.GROQ}`, 
-                        "Content-Type": "application/json" 
-                    },
-                    body: JSON.stringify({ 
-                        model: "llama-3.3-70b-versatile", 
-                        messages: messages,
-                        temperature: 0.7 
-                    })
+                    headers: { "Authorization": `Bearer ${KEYS.GROQ}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, temperature: 0.7 })
                 });
-
-                if(!res.ok) throw new Error(res.status);
+                if(!res.ok) throw new Error();
                 const data = await res.json();
                 return data.choices[0].message.content;
-            } catch (e) {
-                console.warn("Groq Error:", e);
-                return null;
-            }
+            } catch (e) { return null; }
         }
 
-        // Engine B: Gemini (Flash) - Handling History Manually
+        // --- API 2: GEMINI ---
         async function callGemini() {
             try {
-                // Convert Chat History to Gemini "Contents" format
-                // Gemini API v1beta format: { role: "user"|"model", parts: [{ text: "..." }] }
-                const geminiHistory = chatHistory.map(msg => ({
-                    role: msg.role === "user" ? "user" : "model",
-                    parts: [{ text: msg.content }]
+                const parts = chatHistory.map(m => ({
+                    role: m.role === "user" ? "user" : "model",
+                    parts: [{ text: m.content }]
                 }));
-
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEYS.GEMINI}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: geminiHistory })
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: parts })
                 });
-
                 const data = await res.json();
-                
-                // Safety/Error Check
-                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-                    return data.candidates[0].content.parts[0].text;
-                } else {
-                    console.error("Gemini Blocked/Empty:", data);
-                    return "⚠️ Response blocked by safety filters.";
-                }
-            } catch (e) {
-                console.error("Gemini Net Error:", e);
-                return null;
-            }
+                return data.candidates[0].content.parts[0].text;
+            } catch (e) { return null; }
         }
 
-        // Engine C: HuggingFace Flux (Image)
+        // --- API 3: FLUX ART ---
         async function generateArt(prompt) {
             try {
-                // Clean prompt (remove "draw:" etc)
-                const cleanPrompt = prompt.replace(/^(draw|paint|image|generate|lukis|gambar)[:\s]/i, '').trim();
-
+                // Remove trigger word for cleaner prompt
+                const cleanPrompt = prompt.replace(/^(draw|image|generate|paint|lukis)\s/i, '');
                 const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
                     headers: { Authorization: `Bearer ${KEYS.HF}`, "Content-Type": "application/json" },
-                    method: "POST",
-                    body: JSON.stringify({ inputs: cleanPrompt }),
+                    method: "POST", body: JSON.stringify({ inputs: cleanPrompt }),
                 });
-
-                if (!res.ok) throw new Error("Busy");
+                
+                if (!res.ok) throw new Error();
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
                 
                 const div = document.createElement('div');
                 div.className = "msg-row a-row";
-                div.innerHTML = `<div class="msg a-msg"><img src="${url}" class="art-result" onload="scrollToBottom()"></div>`;
+                div.innerHTML = `
+                    <div class="msg a-msg" style="padding:0; background:transparent; border:none;">
+                        <div class="art-wrapper">
+                            <img src="${url}" class="art-result" onload="scrollToBottom()">
+                            <div class="art-tag">FLUX.1</div>
+                        </div>
+                    </div>`;
                 dom.feed.appendChild(div);
                 scrollToBottom();
             } catch (e) {
-                addMessage("⚠️ Art server is busy. Try again in 30s.", 'ai');
+                addMessage("⚠️ Art generation failed. Server busy.", 'ai');
             }
         }
 
-        // --- 5. UI UTILITIES ---
-
+        // --- UI UTILS ---
         function addMessage(text, sender) {
             const row = document.createElement('div');
             row.className = `msg-row ${sender === 'user' ? 'u-row' : 'a-row'}`;
@@ -416,20 +434,31 @@
             bubble.className = `msg ${sender === 'user' ? 'u-msg' : 'a-msg'}`;
             
             if (sender === 'ai') {
-                // Parse Markdown
+                // Render Markdown
                 bubble.innerHTML = marked.parse(text);
-                // Add Copy Buttons to Code Blocks
-                const pres = bubble.querySelectorAll('pre');
-                pres.forEach(pre => {
-                    const btn = document.createElement('button');
-                    btn.className = 'copy-btn';
-                    btn.innerText = 'Copy';
-                    btn.onclick = () => {
-                        navigator.clipboard.writeText(pre.innerText);
-                        btn.innerText = 'Copied!';
-                        setTimeout(() => btn.innerText = 'Copy', 2000);
+                // Wrap Pre tags in Mac-style window
+                bubble.querySelectorAll('pre').forEach(pre => {
+                    const code = pre.querySelector('code').innerText;
+                    const wrapper = document.createElement('div');
+                    
+                    // Create Header
+                    const header = document.createElement('div');
+                    header.className = 'code-header';
+                    header.innerHTML = `
+                        <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+                        <button class="copy-btn">Copy</button>
+                    `;
+                    
+                    // Copy Logic
+                    header.querySelector('.copy-btn').onclick = function() {
+                        navigator.clipboard.writeText(code);
+                        this.innerText = 'Copied!';
+                        setTimeout(() => this.innerText = 'Copy', 2000);
                     };
-                    pre.appendChild(btn);
+
+                    pre.parentNode.insertBefore(wrapper, pre);
+                    wrapper.appendChild(header);
+                    wrapper.appendChild(pre);
                 });
             } else {
                 bubble.innerText = text;
@@ -441,11 +470,11 @@
         }
 
         function addLoader() {
-            const id = "loader-" + Date.now();
+            const id = "ldr-" + Date.now();
             const row = document.createElement('div');
             row.className = "msg-row a-row";
             row.id = id;
-            row.innerHTML = `<div class="msg a-msg"><div class="typing"><span></span><span></span><span></span></div></div>`;
+            row.innerHTML = `<div class="msg a-msg"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
             dom.feed.appendChild(row);
             scrollToBottom();
             return id;
@@ -457,9 +486,10 @@
         }
 
         function setStatus(text, color) {
-            dom.statusText.innerText = text;
-            dom.statusDot.style.background = color;
-            dom.statusDot.style.boxShadow = `0 0 10px ${color}`;
+            dom.badge.innerText = text;
+            dom.badge.style.color = color;
+            dom.badge.style.borderColor = color;
+            dom.badge.style.background = color + '1a'; // 10% opacity
         }
 
         function scrollToBottom() {
@@ -469,14 +499,7 @@
         function clearChat() {
             chatHistory = [];
             dom.feed.innerHTML = '';
-            addMessage("Chat cleared. Memory reset.", 'ai');
-        }
-
-        function trimHistory() {
-            // Keep last 10 turns (20 messages) to save tokens/money
-            if (chatHistory.length > 20) {
-                chatHistory = chatHistory.slice(chatHistory.length - 20);
-            }
+            addMessage("Chat cleared.", 'ai');
         }
     </script>
 </body>
