@@ -715,17 +715,19 @@ function scrollToBottom() {
         }
     }
 
-
-
-            async function callHF(key, model, sys, prompt, imageUrl) {
+    async function callHF(key, model, sys, prompt, imageUrl) {
         const url = `https://api-inference.huggingface.co/models/${model}`;
         
         let payload = {};
 
         if (imageUrl) {
             // Vision Payload
+            // If the user didn't type a prompt, default to "Describe this image"
+            // to prevent empty input errors from HF.
+            const finalPrompt = prompt || "Describe this image";
+            
             payload = {
-                inputs: prompt, 
+                inputs: finalPrompt, 
                 image: imageUrl, 
                 parameters: { max_new_tokens: 500 }
             };
@@ -756,6 +758,7 @@ function scrollToBottom() {
 
         return Array.isArray(data) ? data[0].generated_text : data.generated_text;
     }
+
 
     // --- File Handling ---
     function handleFile() {
