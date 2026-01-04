@@ -1,4 +1,4 @@
-A saw<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -720,54 +720,51 @@ function scrollToBottom() {
 
 
         async function callHF(key, model, sys, prompt, imageUrl) {
+            async function callHF(key, model, sys, prompt, imageUrl) {
+        // FIX: Use the standard Inference API URL (No /v1/chat/completions)
+        const url = `https://api-inference.huggingface.co/models/${model}`;
+        
         let payload = {};
-        let isChat = false;
 
         if (imageUrl) {
-            // Vision Format (OpenAI-style messages for HF)
-            isChat = true;
+            // Vision Payload for HF Inference API
+            // Note: Not all HF models accept images via the free API. 
+            // This structure works for many standard pipelines.
             payload = {
-                model: model,
-                messages: [
-                    { role: "system", content: sys },
-                    { role: "user", content: [
-                        { type: "text", text: prompt || "Describe this image" },
-                        { type: "image_url", image_url: { url: imageUrl } }
-                    ]}
-                ],
-                max_tokens: 1000 // Limit token usage for vision
+                inputs: prompt, 
+                image: imageUrl, // Sends the Base64 image directly
+                parameters: { max_new_tokens: 500 }
             };
         } else {
-            // Standard Text Format (for Mistral/Zephyr/etc)
+            // Standard Text Payload
             payload = {
                 inputs: `System: ${sys}\n\nUser: ${prompt}\n\nAssistant:`, 
                 parameters: { max_new_tokens: 1500, return_full_text: false }
             };
         }
 
-        // Use the chat/completions endpoint if we are using the Vision format, 
-        // otherwise use the standard model endpoint.
-        const url = isChat 
-            ? `https://api-inference.huggingface.co/models/${model}/v1/chat/completions`
-            : `https://api-inference.huggingface.co/models/${model}`;
-
         const response = await fetch(url, {
             method: "POST",
-            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
+            headers: { 
+                "Authorization": `Bearer ${key}`, 
+                "Content-Type": "application/json" 
+            },
             body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+            // Handle specific HF errors
+            const errText = await response.text();
+            throw new Error(`HF Error ${response.status}: ${errText}`);
+        }
 
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
-        // Handle Vision/Chat Response
-        if (isChat && data.choices && data.choices[0]) {
-            return data.choices[0].message.content;
-        }
-        
-        // Handle Standard Text Response
+        // Return generated text
         return Array.isArray(data) ? data[0].generated_text : data.generated_text;
     }
+
 
 
     // --- File Handling ---
