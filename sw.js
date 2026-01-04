@@ -2,8 +2,8 @@ const CACHE_NAME = "ai-app-v1";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css",
-  "./app.js",
+    "./envy.js",
+  
   "./manifest.json",
   "https://cdn.jsdelivr.net/npm/marked/marked.min.js"
 ];
