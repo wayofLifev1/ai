@@ -3,205 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot</title>
+    <title>Ultimate AI Client (Groq + HF)</title>
     <style>
         :root {
             --primary: #2563eb;
-            --bg: #f1f5f9;
+            --primary-dark: #1e40af;
+            --bg: #f8fafc;
             --chat-bg: #ffffff;
-            --user-bubble: #2563eb;
-            --ai-bubble: #f3f4f6;
+            --user-msg: #2563eb;
+            --ai-msg: #f1f5f9;
+            --border: #e2e8f0;
             --text: #0f172a;
+            --text-light: #64748b;
         }
 
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             margin: 0;
             display: flex;
-            justify-content: center;
-            height: 100vh;
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 500px;
-            background: var(--chat-bg);
-            display: flex;
             flex-direction: column;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            height: 100vh;
+            color: var(--text);
         }
 
-        /* --- Header --- */
-        .header {
+        /* --- HEADER --- */
+        header {
+            background: white;
             padding: 15px 20px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             z-index: 10;
         }
 
-        h3 { margin: 0; font-size: 1.1rem; }
+        .header-title { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .header-controls { display: flex; gap: 10px; }
 
-        .lang-btn {
-            padding: 4px 10px;
-            border: 1px solid #cbd5e1;
+        button.icon-btn, button.lang-btn {
             background: white;
-            border-radius: 6px;
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        button.icon-btn:hover, button.lang-btn:hover { background: #f1f5f9; }
+
+        /* --- SETTINGS MODAL --- */
+        #settingsPanel {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
         }
 
-        /* --- Chat Area --- */
-        .chat-box {
-            flex: 1;
-            padding: 20px;
+        .settings-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh;
             overflow-y: auto;
+        }
+
+        .settings-group { margin-bottom: 15px; }
+        .settings-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        .settings-group input, .settings-group textarea, .settings-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box; /* Important for padding */
+        }
+        .save-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* --- CHAT AREA --- */
+        #chatContainer {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
         }
 
         .message {
-            max-width: 80%;
-            padding: 12px 16px;
+            max-width: 85%;
+            padding: 15px;
             border-radius: 12px;
-            line-height: 1.5;
+            line-height: 1.6;
             position: relative;
             font-size: 0.95rem;
+            word-wrap: break-word;
         }
 
-        .user-msg {
+        .message.user {
             align-self: flex-end;
-            background: var(--user-bubble);
+            background: var(--user-msg);
             color: white;
             border-bottom-right-radius: 2px;
         }
 
-        .ai-msg {
+        .message.ai {
             align-self: flex-start;
-            background: var(--ai-bubble);
-            color: var(--text);
+            background: var(--ai-msg);
             border-bottom-left-radius: 2px;
-            padding-bottom: 30px; /* Space for copy button */
+            padding-bottom: 35px; /* Space for copy button */
         }
 
-        /* Copy Button (Inside AI Bubble) */
-        .msg-copy-btn {
+        /* Markdown-ish Formatting */
+        .message pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 0.85rem;
+        }
+        .message code {
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .message.user code { background: rgba(255,255,255,0.2); }
+
+        /* Copy Button */
+        .copy-btn {
             position: absolute;
-            bottom: 5px;
-            right: 8px;
-            background: transparent;
-            border: none;
-            color: #64748b;
+            bottom: 8px;
+            right: 10px;
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-light);
+            padding: 4px 10px;
+            border-radius: 4px;
             font-size: 0.75rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 4px;
-            padding: 2px 6px;
-            border-radius: 4px;
         }
+        .copy-btn:hover { color: var(--primary); border-color: var(--primary); }
 
-        .msg-copy-btn:hover { background: rgba(0,0,0,0.05); color: var(--primary); }
-
-        /* --- Input Area --- */
+        /* --- INPUT AREA --- */
         .input-area {
-            padding: 15px;
-            border-top: 1px solid #e2e8f0;
-            background: #fff;
+            background: white;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
             display: flex;
             gap: 10px;
-            flex-direction: column;
+            align-items: flex-end;
         }
 
-        .model-selector {
-            font-size: 0.85rem;
-            padding: 5px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            width: fit-content;
-        }
-
-        .input-row { display: flex; gap: 10px; }
-
-        input {
+        textarea#userInput {
             flex: 1;
             padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 24px;
-            outline: none;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            resize: none;
+            height: 50px; /* Base height */
+            font-family: inherit;
         }
+        textarea#userInput:focus { outline: 2px solid var(--primary); border-color: transparent; }
 
-        input:focus { border-color: var(--primary); }
-
-        button.send-btn {
+        button#sendBtn {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0 20px;
-            border-radius: 24px;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+        button#sendBtn:hover { background: var(--primary-dark); }
+        button#sendBtn:disabled { background: #cbd5e1; cursor: not-allowed; }
 
-        /* Loading */
-        .typing { font-size: 0.8rem; color: #94a3b8; margin-left: 10px; display: none; }
+        .spinner {
+            width: 20px; height: 20px;
+            border: 3px solid #ffffff;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--text-light);
+        }
     </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="header">
-        <div>
-            <h3 data-key="title">AI Assistant</h3>
-            <select class="model-selector" id="modelSelect">
-                <option value="groq">Groq</option>
-                <option value="hf">Hugging Face</option>
-            </select>
+    <header>
+        <div class="header-title">
+            <span>🤖 AI Chat</span>
         </div>
-        <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">BM</button>
-    </div>
+        <div class="header-controls">
+            <button class="lang-btn" onclick="toggleLanguage()" id="langToggle">BM</button>
+            <button class="icon-btn" onclick="toggleSettings()" id="settingsBtn">⚙️ Settings</button>
+        </div>
+    </header>
 
-    <div class="chat-box" id="chatBox">
-        <div class="message ai-msg">
-            <span data-key="welcome">Hello! How can I help you today?</span>
+    <div id="chatContainer">
+        <div class="empty-state">
+            <h3 data-t="welcomeTitle">Welcome</h3>
+            <p data-t="welcomeSub">Please configure your API keys in Settings to start.</p>
         </div>
     </div>
-    
-    <div class="typing" id="typingIndicator" data-key="typing">AI is typing...</div>
 
     <div class="input-area">
-        <div class="input-row">
-            <input type="text" id="userInput" placeholder="Type a message...">
-            <button class="send-btn" onclick="sendMessage()" data-key="send">Send</button>
+        <textarea id="userInput" placeholder="Type a message..." data-p="placeholder"></textarea>
+        <button id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+
+    <div id="settingsPanel">
+        <div class="settings-content">
+            <h3 style="margin-top:0" data-t="settingsTitle">Configuration</h3>
+            
+            <div class="settings-group">
+                <label>Provider / Penyedia</label>
+                <select id="providerSelect" onchange="updateModelPlaceholder()">
+                    <option value="groq">Groq</option>
+                    <option value="hf">Hugging Face</option>
+                </select>
+            </div>
+
+            <div class="settings-group">
+                <label>API Key</label>
+                <input type="password" id="apiKey" placeholder="gsk_... or hf_...">
+            </div>
+
+            <div class="settings-group">
+                <label>Model Name / ID</label>
+                <input type="text" id="modelId" placeholder="llama3-8b-8192">
+                <small style="color:#64748b; font-size:0.8rem">Groq: llama3-8b-8192 | HF: mistralai/Mixtral-8x7B-Instruct-v0.1</small>
+            </div>
+
+            <div class="settings-group">
+                <label>System Instruction / Arahan Sistem</label>
+                <textarea id="systemPrompt" rows="3" placeholder="You are a helpful assistant..."></textarea>
+            </div>
+
+            <button class="save-btn" onclick="saveSettings()" data-t="saveBtn">Save & Close</button>
+            <button class="icon-btn" style="width:100%; margin-top:5px; border:none;" onclick="toggleSettings()" data-t="cancelBtn">Cancel</button>
         </div>
     </div>
-</div>
 
 <script>
-    // --- 1. Language Data ---
+    // --- 1. Dual Language Logic ---
     const translations = {
         en: {
-            title: "AI Assistant",
-            welcome: "Hello! How can I help you today?",
+            settingsTitle: "Configuration",
+            saveBtn: "Save & Close",
+            cancelBtn: "Cancel",
+            welcomeTitle: "Welcome",
+            welcomeSub: "Please configure your API keys in Settings to start.",
             placeholder: "Type a message...",
-            send: "Send",
-            typing: "AI is typing...",
             copy: "Copy",
-            copied: "Copied!"
+            copied: "Copied!",
+            errorKey: "Please enter an API Key in settings.",
+            errorGen: "Error generating response."
         },
         ms: {
-            title: "Pembantu AI",
-            welcome: "Hai! Apa yang boleh saya bantu?",
+            settingsTitle: "Konfigurasi",
+            saveBtn: "Simpan & Tutup",
+            cancelBtn: "Batal",
+            welcomeTitle: "Selamat Datang",
+            welcomeSub: "Sila masukkan kunci API di Tetapan untuk bermula.",
             placeholder: "Taip mesej...",
-            send: "Hantar",
-            typing: "AI sedang menaip...",
             copy: "Salin",
-            copied: "Disalin!"
+            copied: "Disalin!",
+            errorKey: "Sila masukkan Kunci API dalam tetapan.",
+            errorGen: "Ralat menjana respons."
         }
     };
 
@@ -209,81 +309,182 @@
 
     function toggleLanguage() {
         currentLang = currentLang === 'en' ? 'ms' : 'en';
-        document.getElementById('langBtn').innerText = currentLang === 'en' ? 'BM' : 'EN';
-        
-        // Update static UI
-        document.querySelectorAll('[data-key]').forEach(el => {
-            // Only update static elements, not chat history
-            if(!el.closest('.message')) { 
-                el.innerText = translations[currentLang][el.getAttribute('data-key')];
-            }
+        document.getElementById('langToggle').innerText = currentLang === 'en' ? 'BM' : 'EN';
+        updateUIText();
+    }
+
+    function updateUIText() {
+        // Text Content
+        document.querySelectorAll('[data-t]').forEach(el => {
+            el.innerText = translations[currentLang][el.getAttribute('data-t')];
         });
-
-        document.getElementById('userInput').placeholder = translations[currentLang].placeholder;
+        // Placeholders
+        document.querySelectorAll('[data-p]').forEach(el => {
+            el.placeholder = translations[currentLang][el.getAttribute('data-p')];
+        });
     }
 
-    // --- 2. Chat Logic ---
-    function sendMessage() {
-        const inputField = document.getElementById('userInput');
-        const text = inputField.value.trim();
-        const model = document.getElementById('modelSelect').value;
+    // --- 2. Settings & Storage ---
+    function toggleSettings() {
+        const panel = document.getElementById('settingsPanel');
+        panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function saveSettings() {
+        localStorage.setItem('ai_provider', document.getElementById('providerSelect').value);
+        localStorage.setItem('ai_key', document.getElementById('apiKey').value);
+        localStorage.setItem('ai_model', document.getElementById('modelId').value);
+        localStorage.setItem('ai_system', document.getElementById('systemPrompt').value);
+        toggleSettings();
         
-        if (!text) return;
-
-        // Add User Message
-        addMessage(text, 'user');
-        inputField.value = '';
-
-        // Show Typing Indicator
-        const typingIndicator = document.getElementById('typingIndicator');
-        typingIndicator.style.display = 'block';
-
-        // MOCK API CALL - Replace setTimeout with fetch() later
-        setTimeout(() => {
-            typingIndicator.style.display = 'none';
-            
-            // Mock Response
-            const aiResponse = model === 'groq' 
-                ? `[Groq] Answer to: ${text}` 
-                : `[Hugging Face] Answer to: ${text}`;
-                
-            addMessage(aiResponse, 'ai');
-        }, 1000);
+        // Remove empty state if settings saved
+        const container = document.getElementById('chatContainer');
+        if(container.querySelector('.empty-state')) container.innerHTML = '';
     }
 
-    function addMessage(text, sender) {
-        const chatBox = document.getElementById('chatBox');
+    function loadSettings() {
+        if(localStorage.getItem('ai_provider')) {
+            document.getElementById('providerSelect').value = localStorage.getItem('ai_provider');
+            document.getElementById('apiKey').value = localStorage.getItem('ai_key');
+            document.getElementById('modelId').value = localStorage.getItem('ai_model');
+            document.getElementById('systemPrompt').value = localStorage.getItem('ai_system');
+            
+            // Clear welcome screen if key exists
+            if(localStorage.getItem('ai_key')) {
+                document.getElementById('chatContainer').innerHTML = '';
+            }
+        } else {
+            // Defaults
+            document.getElementById('modelId').value = "llama3-8b-8192";
+        }
+    }
+
+    function updateModelPlaceholder() {
+        const provider = document.getElementById('providerSelect').value;
+        const input = document.getElementById('modelId');
+        if(provider === 'groq') input.value = "llama3-8b-8192";
+        if(provider === 'hf') input.value = "mistralai/Mixtral-8x7B-Instruct-v0.1";
+    }
+
+    // --- 3. Message Rendering & Copy ---
+    function appendMessage(role, text) {
+        const container = document.getElementById('chatContainer');
         const div = document.createElement('div');
-        div.classList.add('message', sender === 'user' ? 'user-msg' : 'ai-msg');
+        div.className = `message ${role}`;
         
-        // Message Content
-        const contentSpan = document.createElement('span');
-        contentSpan.innerText = text;
-        div.appendChild(contentSpan);
+        // Basic Formatting (Code Blocks & Bold)
+        let formattedText = text
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>') // Code blocks
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+            .replace(/\n/g, '<br>'); // New lines
 
-        // Add Copy Button ONLY for AI messages
-        if (sender === 'ai') {
+        div.innerHTML = formattedText;
+
+        // Add Copy Button to AI messages
+        if(role === 'ai') {
             const btn = document.createElement('button');
-            btn.classList.add('msg-copy-btn');
-            btn.innerHTML = `<span class="btn-text">${translations[currentLang].copy}</span>`;
-            
+            btn.className = 'copy-btn';
+            btn.innerHTML = `<span>${translations[currentLang].copy}</span>`;
             btn.onclick = () => {
-                navigator.clipboard.writeText(text);
-                const span = btn.querySelector('.btn-text');
-                span.innerText = translations[currentLang].copied;
-                setTimeout(() => span.innerText = translations[currentLang].copy, 2000);
+                navigator.clipboard.writeText(text); // Copy raw text
+                btn.querySelector('span').innerText = translations[currentLang].copied;
+                setTimeout(() => btn.querySelector('span').innerText = translations[currentLang].copy, 2000);
             };
-            
             div.appendChild(btn);
         }
 
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight; // Auto scroll to bottom
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     }
 
-    // Allow "Enter" key to send
-    document.getElementById('userInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') sendMessage();
+    // --- 4. API Logic (The "Full Working" Part) ---
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
+        const sendBtn = document.getElementById('sendBtn');
+        
+        const apiKey = localStorage.getItem('ai_key');
+        const provider = localStorage.getItem('ai_provider') || 'groq';
+        const model = localStorage.getItem('ai_model') || 'llama3-8b-8192';
+        const systemPrompt = localStorage.getItem('ai_system') || '';
+
+        if (!text) return;
+        if (!apiKey) {
+            alert(translations[currentLang].errorKey);
+            toggleSettings();
+            return;
+        }
+
+        // UI Updates
+        input.value = '';
+        appendMessage('user', text);
+        sendBtn.innerHTML = '<div class="spinner"></div>';
+        sendBtn.disabled = true;
+
+        try {
+            let responseText = "";
+
+            // --- GROQ API CALL ---
+            if (provider === 'groq') {
+                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: text }
+                        ],
+                        temperature: 0.7
+                    })
+                });
+                const data = await res.json();
+                if(data.error) throw new Error(data.error.message);
+                responseText = data.choices[0].message.content;
+            }
+
+            // --- HUGGING FACE API CALL ---
+            else if (provider === 'hf') {
+                const res = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        inputs: `${systemPrompt}\nUser: ${text}\nAssistant:`,
+                        parameters: { max_new_tokens: 500, return_full_text: false }
+                    })
+                });
+                const data = await res.json();
+                if(data.error) throw new Error(data.error);
+                // HF structure varies, usually an array
+                responseText = Array.isArray(data) ? data[0].generated_text : data.generated_text;
+            }
+
+            appendMessage('ai', responseText);
+
+        } catch (err) {
+            console.error(err);
+            appendMessage('ai', `❌ ${translations[currentLang].errorGen}: ${err.message}`);
+        } finally {
+            sendBtn.innerHTML = '➤';
+            sendBtn.disabled = false;
+        }
+    }
+
+    // Initial Load
+    loadSettings();
+
+    // Enter to Send
+    document.getElementById('userInput').addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
     });
 </script>
 
