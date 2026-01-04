@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini</title>
+    <title>ai</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
@@ -16,7 +16,7 @@
             --bg-sidebar: #f0f4f9;
             --text-main: #1f1f1f;
             --text-secondary: #5f6368;
-            --primary: #0b57d0; /* Gemini Blue */
+            --primary: #0b57d0; /* Google Blue */
             --user-bubble: #e8f0fe;
             --border-color: #e3e3e3;
             --code-bg: #1e1e1e;
@@ -43,13 +43,12 @@
             height: 100%;
             z-index: 20;
             transform: translateX(-100%);
-            border-right: 1px solid transparent;
         }
 
         @media (min-width: 768px) {
             #sidebar { position: relative; transform: translateX(0); }
         }
-        #sidebar.open { transform: translateX(0); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        #sidebar.open { transform: translateX(0); }
 
         .sidebar-header { padding: 20px; }
         
@@ -61,7 +60,7 @@
             font-size: 0.9rem;
         }
         .new-chat-btn:hover { background: #d1d9e0; }
-        
+
         .history-list { flex: 1; overflow-y: auto; padding: 10px 15px; }
         .history-item {
             padding: 10px 15px; margin-bottom: 5px; border-radius: 20px; 
@@ -71,45 +70,34 @@
         }
         .history-item:hover { background: #e0e5eb; }
         .history-item.active { background: #c2e7ff; color: #001d35; font-weight: 500; }
-        
-        .delete-chat { 
-            visibility: hidden; color: #444746; font-size: 1rem; padding: 4px; 
-            border-radius: 50%;
-        }
-        .delete-chat:hover { background: #ffdad6; color: #b3261e; }
-        .history-item:hover .delete-chat { visibility: visible; }
+        .delete-chat { display: none; color: #b3261e; font-size: 1rem; padding: 2px; }
+        .history-item:hover .delete-chat { display: block; }
 
         /* --- MAIN AREA --- */
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; }
-        
-        /* Sidebar Overlay for Mobile */
-        #sidebarOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.3); z-index: 15; display: none;
-        }
-        #sidebar.open + #sidebarOverlay { display: block; }
-        @media (min-width: 768px) { #sidebarOverlay { display: none !important; } }
 
         header {
             padding: 15px 20px; 
             display: flex; justify-content: space-between; align-items: center;
         }
         .menu-toggle { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
-        .brand-name { font-weight: 500; font-size: 1.3rem; color: #444746; letter-spacing: -0.5px; }
-        
         .model-pill {
             font-size: 0.85rem; background: #f0f4f9; padding: 6px 12px; border-radius: 8px; 
             color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap:5px;
-            transition: 0.2s;
         }
-        .model-pill:hover { background: #e0e5eb; }
 
         /* CHAT CONTAINER */
         #chatContainer {
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 25px;
-            width: 100%; max-width: 800px; margin: 0 auto;
-            padding-bottom: 40px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            scroll-behavior: smooth;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         /* MESSAGES */
@@ -123,80 +111,128 @@
             flex-shrink: 0;
         }
         .ai .avatar { background: linear-gradient(135deg, #4285f4, #d96570); color: white; }
-        
-        .message { max-width: 90%; font-size: 1rem; line-height: 1.6; word-wrap: break-word; }
+        .user .avatar { display: none; } 
+
+        .message {
+            max-width: 85%;
+            font-size: 1rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
         .message.user {
-            background: #f0f4f9; color: var(--text-main);
-            padding: 10px 18px; border-radius: 18px;
+            background: #f0f4f9;
+            color: var(--text-main);
+            padding: 12px 20px;
+            border-radius: 20px;
             border-top-right-radius: 4px;
         }
-        .message.ai { background: transparent; color: var(--text-main); padding: 0; width: 100%; }
 
-        /* MARKDOWN & CODE */
+        .message.ai {
+            background: transparent;
+            color: var(--text-main);
+            padding: 0;
+            width: 100%; 
+        }
+
+        /* MARKDOWN STYLES */
         .message.ai p { margin-top: 0; margin-bottom: 10px; }
-        .message.ai h1, .message.ai h2 { margin-top: 20px; font-weight: 500; }
+        .message.ai h1, .message.ai h2, .message.ai h3 { margin-top: 20px; margin-bottom: 10px; font-weight: 600; }
         
-        .code-block-wrapper { margin: 15px 0; border-radius: 8px; overflow: hidden; border: 1px solid #e3e3e3; }
+        /* Code Blocks */
+        .code-block-wrapper {
+            margin: 15px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e3e3e3;
+        }
         .code-header {
-            background: #2d2d2d; color: #e0e0e0; padding: 8px 15px; font-size: 0.75rem;
-            display: flex; justify-content: space-between; align-items: center; font-family: sans-serif;
+            background: #2d2d2d; color: #e0e0e0;
+            padding: 8px 15px; font-size: 0.8rem;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .code-header button {
             background: transparent; border: none; color: #a0a0a0; cursor: pointer;
             font-size: 0.75rem; display: flex; align-items: center; gap: 4px;
         }
         .code-header button:hover { color: white; }
-        .message.ai pre { background: var(--code-bg); margin: 0; padding: 15px; overflow-x: auto; color: #fff; }
+        
+        .message.ai pre { 
+            background: var(--code-bg); margin: 0; padding: 15px; 
+            overflow-x: auto; color: #fff;
+        }
         .message.ai code { font-family: 'Roboto Mono', monospace; font-size: 0.9em; }
-        .message.ai :not(pre) > code { background: #f0f4f9; padding: 2px 6px; border-radius: 4px; font-family: 'Roboto Mono', monospace; font-size: 0.9em; color: #1f1f1f; }
+        
+        /* Inline code */
+        .message.ai :not(pre) > code {
+            background: #f0f4f9; padding: 2px 6px; border-radius: 4px;
+            font-family: 'Roboto Mono', monospace; font-size: 0.9em; color: #1f1f1f;
+        }
 
         /* INPUT AREA */
-        .input-container { width: 100%; max-width: 800px; margin: 0 auto; padding: 20px; position: relative; }
-        .input-box {
-            background: #f0f4f9; border-radius: 28px; padding: 12px 15px; 
-            display: flex; flex-direction: column; transition: 0.2s;
+        .input-container {
+            width: 100%; max-width: 850px; margin: 0 auto;
+            padding: 20px; position: relative;
         }
-        .input-box:focus-within { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        .input-box {
+            background: #f0f4f9; border-radius: 28px;
+            padding: 10px 15px; display: flex; flex-direction: column;
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .input-box:focus-within { background: white; border-color: #d0d0d0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 
         .file-preview {
-            display: none; padding: 8px 12px; margin-bottom: 8px;
+            display: none; padding: 8px 12px; margin-bottom: 5px;
             background: white; border-radius: 8px; width: fit-content;
-            font-size: 0.85rem; border: 1px solid #e3e3e3; align-items: center; gap: 8px;
+            font-size: 0.85rem; border: 1px solid #e3e3e3;
+            align-items: center; gap: 8px;
         }
 
         .input-row { display: flex; align-items: flex-end; gap: 10px; }
+
         textarea {
-            flex: 1; background: transparent; border: none; padding: 10px 0;
-            resize: none; font-family: inherit; font-size: 1rem; max-height: 200px;
-            outline: none; line-height: 1.5; height: 24px;
+            flex: 1; background: transparent; border: none;
+            padding: 12px 0; resize: none; font-family: inherit; font-size: 1rem;
+            max-height: 200px; outline: none; line-height: 1.5;
+            height: 24px; /* Start small */
         }
+
         button.icon-btn {
             background: none; border: none; cursor: pointer; color: #444746;
             padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
         }
-        button.icon-btn:hover { background: #e0e5eb; }
-        button.icon-btn.send { color: var(--text-secondary); transition: color 0.2s; }
-        button.icon-btn.send.active { color: var(--primary); }
+        button.icon-btn:hover { background: #e0e5eb; color: var(--text-main); }
+        button.icon-btn.send { color: var(--primary); }
+        button.icon-btn.send:disabled { color: #b0b0b0; cursor: default; }
 
-        .cursor::after { content: "●"; color: var(--primary); animation: blink 1s infinite; margin-left: 2px; }
+        /* Cursor */
+        .cursor::after {
+            content: "●"; color: var(--primary); font-size: 0.8em;
+            animation: blink 1s infinite; margin-left: 2px;
+        }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         /* SETTINGS MODAL */
         #settingsPanel {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100;
+            background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 100;
         }
         .settings-box { 
-            background: white; padding: 25px; border-radius: 16px; 
+            background: white; padding: 30px; border-radius: 16px; 
             width: 90%; max-width: 450px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+            max-height: 90vh; overflow-y: auto;
         }
-        .setting-row { margin-bottom: 20px; }
-        .setting-row label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; color: #444746; }
+        .setting-row { margin-bottom: 15px; }
+        .setting-row label { display: block; font-weight: 500; margin-bottom: 5px; font-size: 0.85rem; color: #444746; }
         .setting-row input, .setting-row select, .setting-row textarea { 
-            width: 100%; padding: 12px; border: 1px solid #c4c7c5; border-radius: 8px; 
-            box-sizing: border-box; font-family: inherit;
+            width: 100%; padding: 10px; border: 1px solid #c4c7c5; border-radius: 8px; 
+            box-sizing: border-box; font-family: inherit; font-size: 0.95rem;
         }
-        .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 24px; cursor: pointer; font-weight: 500; font-size: 1rem; }
+        .section-title { font-size: 0.8rem; font-weight: 700; color: var(--primary); margin-top: 15px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 24px; cursor: pointer; font-weight: 500; font-size: 1rem; margin-top: 15px; }
 
     </style>
 </head>
@@ -215,7 +251,6 @@
         </button>
     </div>
 </div>
-<div id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <div class="main-content">
     <header>
@@ -223,18 +258,17 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <span class="material-icons-round">menu</span>
             </button>
-            <span class="brand-name">Gemini</span>
+            <span style="font-weight:500; font-size:1.2rem; color:#444746;">Gemini</span>
         </div>
         <div class="model-pill" onclick="toggleSettings()">
             <span class="material-icons-round" style="font-size:16px;">smart_toy</span>
-            <span id="currentModelDisplay" style="margin-left: 5px;">Llama 3</span>
-            <span class="material-icons-round" style="font-size:16px; margin-left:5px;">arrow_drop_down</span>
+            <span id="currentModelDisplay">Groq</span>
         </div>
     </header>
 
     <div id="chatContainer">
         <div style="text-align:center; margin-top:10vh; color:#444746;" id="emptyState">
-            <h1 style="font-weight: 500; font-size: 2.5rem; background: linear-gradient(90deg, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">Hello, Human</h1>
+            <h1 style="font-weight: 400; font-size: 2.5rem; background: linear-gradient(90deg, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">Hello, Human</h1>
             <p style="font-size: 1.2rem; color: #5f6368;">How can I help you today?</p>
         </div>
     </div>
@@ -248,10 +282,10 @@
             </div>
 
             <div class="input-row">
-                <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">
+                <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach Image/File">
                     <span class="material-icons-round">add_circle_outline</span>
                 </button>
-                <textarea id="userInput" placeholder="Ask Gemini..." rows="1"></textarea>
+                <textarea id="userInput" placeholder="Ask anything..." rows="1"></textarea>
                 <button class="icon-btn send" id="sendBtn" onclick="sendMessage()">
                     <span class="material-icons-round">send</span>
                 </button>
@@ -260,8 +294,8 @@
                 </button>
             </div>
         </div>
-        <div style="text-align: center; font-size: 0.75rem; color: #5f6368; margin-top: 12px;">
-            Gemini may display inaccurate info, including about people, so double-check its responses.
+        <div style="text-align: center; font-size: 0.7rem; color: #8e918f; margin-top: 10px;">
+            Gemini may display inaccurate info, so double-check its responses.
         </div>
     </div>
     
@@ -269,66 +303,90 @@
 </div>
 
 <div id="settingsPanel">
-    <div class="settings-box" id="settingsContent">
+    <div class="settings-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0; font-size:1.2rem;">Settings</h2>
+            <h2 style="margin:0;">Configuration</h2>
             <button class="icon-btn" onclick="toggleSettings()"><span class="material-icons-round">close</span></button>
         </div>
         
         <div class="setting-row">
-            <label>API Provider</label>
+            <label>Active Provider</label>
             <select id="primaryProvider">
-                <option value="groq">Groq (Fast)</option>
-                <option value="hf">Hugging Face (Free)</option>
+                <option value="groq">Groq (Fastest)</option>
+                <option value="hf">Hugging Face</option>
             </select>
         </div>
-
-        <div class="setting-row">
-            <label>API Key</label>
-            <input type="password" id="groqKey" placeholder="Enter API Key...">
-        </div>
-
+        
         <div class="setting-row">
             <label>System Instructions</label>
-            <textarea id="sysPrompt" rows="3" placeholder="You are a helpful assistant..."></textarea>
+            <textarea id="sysPrompt" rows="2" placeholder="You are a helpful AI..."></textarea>
         </div>
 
-        <button class="save-btn" onclick="saveSettings()">Save</button>
+        <div class="section-title">Groq Settings</div>
+        <div class="setting-row">
+            <label>API Key (gsk_...)</label>
+            <input type="password" id="groqKey" placeholder="gsk_...">
+        </div>
+        <div class="setting-row">
+            <label>Model Name</label>
+            <input type="text" id="groqModel" value="llama-3.1-70b-versatile">
+        </div>
+
+        <div class="section-title">Hugging Face Settings</div>
+        <div class="setting-row">
+            <label>API Key (hf_...)</label>
+            <input type="password" id="hfKey" placeholder="hf_...">
+        </div>
+        <div class="setting-row">
+            <label>Model Path</label>
+            <input type="text" id="hfModel" value="mistralai/Mixtral-8x7B-Instruct-v0.1">
+        </div>
+
+        <button class="save-btn" onclick="saveSettings()">Save Configuration</button>
     </div>
 </div>
 
 <script>
-    // --- Markdown & UI Setup ---
+    // --- Configuration ---
     marked.setOptions({
         breaks: true,
-        highlight: function(code) { return hljs.highlightAuto(code).value; }
+        highlight: function(code, lang) {
+            return hljs.highlightAuto(code).value;
+        }
     });
-    
+
+    // Custom Renderer for Code Blocks
     const renderer = new marked.Renderer();
     renderer.code = function(code, language) {
         const lang = language || 'text';
-        return `<div class="code-block-wrapper"><div class="code-header"><span>${lang}</span><button onclick="copyCode(this, \`${encodeURIComponent(code)}\`)"><span class="material-icons-round" style="font-size:14px;">content_copy</span> Copy</button></div><pre><code class="hljs ${lang}">${hljs.highlightAuto(code).value}</code></pre></div>`;
+        return `
+        <div class="code-block-wrapper">
+            <div class="code-header">
+                <span>${lang}</span>
+                <button onclick="copyToClipboard(this, \`${encodeURIComponent(code)}\`)">
+                    <span class="material-icons-round" style="font-size:14px;">content_copy</span> Copy
+                </button>
+            </div>
+            <pre><code class="hljs ${lang}">${hljs.highlightAuto(code).value}</code></pre>
+        </div>`;
     };
     marked.use({ renderer });
 
-    // --- Variables ---
+    // --- State ---
     let chats = JSON.parse(localStorage.getItem('chats') || '[]');
     let currentChatId = null;
     let currentAttachment = null;
     let abortController = null;
 
-    // --- DOM Elements ---
     const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
     
-    // --- Input Logic ---
+    // Auto-Resize Textarea
     userInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
-        if(this.value.trim() !== '') sendBtn.classList.add('active');
-        else sendBtn.classList.remove('active');
+        if(this.value === '') this.style.height = '24px';
     });
-
+    
     userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -336,7 +394,7 @@
         }
     });
 
-    // --- UI Toggles ---
+    // --- UI Logic ---
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
     
     function toggleSettings() { 
@@ -344,19 +402,19 @@
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
     }
 
-    // CLOSE PANEL logic: Click outside the box to close
+    // Close settings when clicking outside
     document.getElementById('settingsPanel').addEventListener('mousedown', function(e) {
         if(e.target === this) toggleSettings();
     });
 
-    function copyCode(btn, encoded) {
-        navigator.clipboard.writeText(decodeURIComponent(encoded));
-        const original = btn.innerHTML;
-        btn.innerHTML = `<span class="material-icons-round" style="font-size:14px;">check</span> Copied`;
-        setTimeout(() => btn.innerHTML = original, 2000);
+    function copyToClipboard(btn, encodedCode) {
+        navigator.clipboard.writeText(decodeURIComponent(encodedCode));
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<span class="material-icons-round" style="font-size:14px;">check</span> Copied!`;
+        setTimeout(() => btn.innerHTML = originalHtml, 2000);
     }
 
-    // --- Chat Logic ---
+    // --- Chat History ---
     function renderSidebar() {
         const list = document.getElementById('historyList');
         list.innerHTML = '';
@@ -364,9 +422,9 @@
             const div = document.createElement('div');
             div.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
             div.innerHTML = `
-                <div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">
+                <div style="display:flex;align-items:center;gap:10px;overflow:hidden;">
                     <span class="material-icons-round" style="font-size:16px;">chat_bubble_outline</span>
-                    <span style="overflow:hidden;text-overflow:ellipsis;">${chat.title || 'New Chat'}</span>
+                    <span style="overflow:hidden;text-overflow:ellipsis;">${chat.title || 'New Conversation'}</span>
                 </div>
                 <span class="material-icons-round delete-chat" onclick="deleteChat('${chat.id}', event)">delete</span>
             `;
@@ -378,7 +436,7 @@
     function startNewChat() {
         currentChatId = Date.now().toString();
         chats.unshift({ id: currentChatId, title: 'New Chat', messages: [] });
-        saveChats();
+        localStorage.setItem('chats', JSON.stringify(chats));
         document.getElementById('chatContainer').innerHTML = '';
         document.getElementById('emptyState').style.display = 'block';
         renderSidebar();
@@ -390,34 +448,38 @@
         const chat = chats.find(c => c.id === id);
         document.getElementById('chatContainer').innerHTML = '';
         document.getElementById('emptyState').style.display = 'none';
-        if(chat) chat.messages.forEach(m => appendMessage(m.role, m.text, m.image));
+        
+        if(chat && chat.messages) {
+            chat.messages.forEach(m => {
+                appendMessageToUI(m.role, m.text, m.image);
+            });
+        }
         renderSidebar();
         if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
     }
 
     function deleteChat(id, e) {
         e.stopPropagation();
-        if(confirm('Delete chat?')) {
+        if(confirm('Delete this conversation?')) {
             chats = chats.filter(c => c.id !== id);
-            saveChats();
+            localStorage.setItem('chats', JSON.stringify(chats));
             if(currentChatId === id) startNewChat();
             else renderSidebar();
         }
     }
 
-    function saveChats() { localStorage.setItem('chats', JSON.stringify(chats)); }
-
-    function appendMessage(role, text, image, isStreaming = false) {
+    // --- Message Rendering ---
+    function appendMessageToUI(role, text, image = null, isStreaming = false) {
         document.getElementById('emptyState').style.display = 'none';
         const container = document.getElementById('chatContainer');
-
-        if(isStreaming && role === 'ai') {
-            const last = container.lastElementChild;
-            if(last && last.classList.contains('ai')) {
-                const bubble = last.querySelector('.message');
-                bubble.innerHTML = marked.parse(text) + '<span class="cursor"></span>';
+        
+        if (isStreaming && role === 'ai') {
+            const lastWrapper = container.lastElementChild;
+            if (lastWrapper && lastWrapper.classList.contains('ai')) {
+                const msgContent = lastWrapper.querySelector('.message');
+                msgContent.innerHTML = marked.parse(text) + '<span class="cursor"></span>';
                 container.scrollTop = container.scrollHeight;
-                last.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+                lastWrapper.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
                 return;
             }
         }
@@ -432,136 +494,197 @@
 
         const bubble = document.createElement('div');
         bubble.className = `message ${role}`;
-        
-        let html = '';
-        if(image && role === 'user') html += `<img src="${image}" style="max-height:200px;border-radius:8px;display:block;margin-bottom:10px;">`;
-        
-        if(role === 'ai') html += marked.parse(text) + (isStreaming ? '<span class="cursor"></span>' : '');
-        else html += text.replace(/\n/g, '<br>');
 
-        bubble.innerHTML = html;
+        let contentHtml = '';
+        if (image && role === 'user') {
+            contentHtml += `<img src="${image}" style="max-height: 200px; border-radius: 8px; display: block; margin-bottom: 10px;">`;
+        }
+
+        if (role === 'ai') {
+            contentHtml += marked.parse(text) + (isStreaming ? '<span class="cursor"></span>' : '');
+        } else {
+            contentHtml += text.replace(/\n/g, "<br>");
+        }
+
+        bubble.innerHTML = contentHtml;
         wrapper.appendChild(bubble);
         container.appendChild(wrapper);
+
+        if(role === 'ai') {
+            wrapper.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
+        }
+
         container.scrollTop = container.scrollHeight;
-        
-        if(role === 'ai') wrapper.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
     }
 
-    // --- API Logic ---
+    function stopGeneration() {
+        if(abortController) {
+            abortController.abort();
+            abortController = null;
+            endStreamingState();
+        }
+    }
+
+    function endStreamingState() {
+        document.getElementById('sendBtn').style.display = 'flex';
+        document.getElementById('stopBtn').style.display = 'none';
+        document.querySelectorAll('.cursor').forEach(c => c.remove());
+    }
+
+    // --- Logic ---
     async function sendMessage() {
         const text = userInput.value.trim();
-        if(!text && !currentAttachment) return;
-
-        const img = currentAttachment && currentAttachment.type === 'image' ? currentAttachment.content : null;
-        const fileTxt = currentAttachment && currentAttachment.type === 'text' ? `\n\n[File Content]:\n${currentAttachment.content}` : '';
-        const fullPrompt = text + fileTxt;
-
-        appendMessage('user', text, img);
+        const sendBtn = document.getElementById('sendBtn');
+        const stopBtn = document.getElementById('stopBtn');
         
-        // Save user msg
+        if (!text && !currentAttachment) return;
+
+        // User Msg
+        const tempImage = currentAttachment ? (currentAttachment.type === 'image' ? currentAttachment.content : null) : null;
+        const tempTextContent = currentAttachment && currentAttachment.type === 'text' ? `\n[File Content]:\n${currentAttachment.content}` : '';
+        const fullPrompt = text + tempTextContent;
+        
+        appendMessageToUI('user', text, tempImage);
+        
         const chat = chats.find(c => c.id === currentChatId);
-        if(chat) {
-            chat.messages.push({ role:'user', text, image:img });
-            if(chat.messages.length === 1) chat.title = text.substring(0, 30);
-            saveChats();
-            renderSidebar();
+        if (chat) {
+            chat.messages.push({ role: 'user', text: text, image: tempImage });
+            if (chat.messages.length === 1) {
+                chat.title = text.slice(0, 30);
+                renderSidebar();
+            }
+            localStorage.setItem('chats', JSON.stringify(chats));
         }
 
         userInput.value = '';
         userInput.style.height = '24px';
         clearFile();
-        document.getElementById('sendBtn').style.display = 'none';
-        document.getElementById('stopBtn').style.display = 'block';
+        sendBtn.style.display = 'none';
+        stopBtn.style.display = 'flex';
 
+        // Load Settings
         const provider = localStorage.getItem('cfg_provider') || 'groq';
-        const key = localStorage.getItem('cfg_groq_key');
-        const sys = localStorage.getItem('cfg_sys') || 'You are a helpful AI.';
+        const sysPrompt = localStorage.getItem('cfg_sys') || "You are a helpful assistant.";
+        
+        let apiKey, model;
+        if (provider === 'groq') {
+            apiKey = localStorage.getItem('cfg_groq_key');
+            model = localStorage.getItem('cfg_groq_model');
+        } else {
+            apiKey = localStorage.getItem('cfg_hf_key');
+            model = localStorage.getItem('cfg_hf_model');
+        }
 
-        if(!key) {
-            appendMessage('ai', 'Please set your API Key in Settings.');
-            stopGeneration();
+        if (!apiKey) {
+            appendMessageToUI('ai', "Please set your API Key in Settings.");
+            endStreamingState();
             return;
         }
 
-        let aiText = "";
-        appendMessage('ai', "", null, false); // Placeholder
+        let aiResponseText = "";
+        appendMessageToUI('ai', "", null, false); 
         abortController = new AbortController();
 
         try {
-            if(provider === 'groq') {
-                await streamGroq(key, sys, fullPrompt, img, (chunk) => {
-                    aiText += chunk;
-                    appendMessage('ai', aiText, null, true);
+            if (provider === 'groq') {
+                await streamGroq(apiKey, model, sysPrompt, fullPrompt, tempImage, (chunk) => {
+                    aiResponseText += chunk;
+                    appendMessageToUI('ai', aiResponseText, null, true);
                 });
             } else {
-                aiText = await callHF(key, sys, fullPrompt);
-                appendMessage('ai', aiText, null, true);
+                const reply = await callHF(apiKey, model, sysPrompt, fullPrompt);
+                aiResponseText = reply;
+                appendMessageToUI('ai', aiResponseText, null, true); 
             }
-            
-            if(chat) {
-                chat.messages.push({ role:'ai', text:aiText });
-                saveChats();
+
+            if (chat) {
+                chat.messages.push({ role: 'ai', text: aiResponseText });
+                localStorage.setItem('chats', JSON.stringify(chats));
             }
-        } catch (e) {
-            if(e.name !== 'AbortError') appendMessage('ai', `Error: ${e.message}`);
+
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                aiResponseText += "\n[Stopped by user]";
+                appendMessageToUI('ai', aiResponseText, null, true);
+            } else {
+                appendMessageToUI('ai', `**Error:** ${err.message}`);
+            }
         } finally {
-            stopGeneration();
+            endStreamingState();
         }
     }
 
-    function stopGeneration() {
-        if(abortController) abortController.abort();
-        abortController = null;
-        document.getElementById('sendBtn').style.display = 'block';
-        document.getElementById('stopBtn').style.display = 'none';
-        document.querySelectorAll('.cursor').forEach(e => e.remove());
-    }
+    // --- APIs ---
+    async function streamGroq(key, model, sys, prompt, imageUrl, onChunk) {
+        const messages = [{ role: "system", content: sys }];
+        if (imageUrl) {
+            messages.push({
+                role: "user",
+                content: [
+                    { type: "text", text: prompt || "Describe this image" },
+                    { type: "image_url", image_url: { url: imageUrl } }
+                ]
+            });
+        } else {
+            messages.push({ role: "user", content: prompt });
+        }
 
-    async function streamGroq(key, sys, prompt, img, onChunk) {
-        const msgs = [{role:'system', content:sys}];
-        if(img) msgs.push({role:'user', content:[{type:'text', text:prompt||'Describe image'}, {type:'image_url', image_url:{url:img}}]});
-        else msgs.push({role:'user', content:prompt});
-
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST", headers: {"Authorization":`Bearer ${key}`, "Content-Type":"application/json"},
-            body: JSON.stringify({ model: "llama-3.1-70b-versatile", messages: msgs, stream: true }),
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ model: model, messages: messages, stream: true }),
             signal: abortController.signal
         });
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        while(true) {
-            const {done, value} = await reader.read();
-            if(done) break;
-            const lines = decoder.decode(value).split('\n');
-            for(const line of lines) {
-                if(line.startsWith('data: ') && line !== 'data: [DONE]') {
-                    try { onChunk(JSON.parse(line.substring(6)).choices[0].delta.content || ""); } catch(e){}
+        if (!response.ok) throw new Error("API Request Failed");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n");
+            for (const line of lines) {
+                if (line.startsWith("data: ") && line !== "data: [DONE]") {
+                    try {
+                        const json = JSON.parse(line.substring(6));
+                        const content = json.choices[0]?.delta?.content || "";
+                        if (content) onChunk(content);
+                    } catch (e) {}
                 }
             }
         }
     }
 
-    async function callHF(key, sys, prompt) {
-        const res = await fetch("https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1", {
-            method: "POST", headers: {"Authorization":`Bearer ${key}`, "Content-Type":"application/json"},
-            body: JSON.stringify({ inputs: `${sys}\nUser:${prompt}\nAssistant:`, parameters: {max_new_tokens:1000} })
+    async function callHF(key, model, sys, prompt) {
+        const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                inputs: `${sys}\nUser: ${prompt}\nAssistant:`,
+                parameters: { max_new_tokens: 1500, return_full_text: false }
+            })
         });
-        const d = await res.json();
-        return Array.isArray(d) ? d[0].generated_text : d.generated_text;
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        return Array.isArray(data) ? data[0].generated_text : data.generated_text;
     }
 
-    // --- File Utils ---
+    // --- File Handling ---
     function handleFile() {
         const f = document.getElementById('fileInput').files[0];
         if(!f) return;
-        const r = new FileReader();
-        r.onload = (e) => {
-            currentAttachment = {type: f.type.startsWith('image/')?'image':'text', content:e.target.result};
+        const reader = new FileReader();
+        const isImg = f.type.startsWith('image/');
+        
+        reader.onload = (e) => {
+            currentAttachment = { type: isImg ? 'image' : 'text', content: e.target.result };
             document.getElementById('filePreview').style.display = 'flex';
             document.getElementById('fileName').innerText = f.name;
+            document.getElementById('previewIcon').innerText = isImg ? '🖼️' : '📄';
         };
-        f.type.startsWith('image/') ? r.readAsDataURL(f) : r.readAsText(f);
+        isImg ? reader.readAsDataURL(f) : reader.readAsText(f);
     }
     function clearFile() {
         document.getElementById('fileInput').value = '';
@@ -569,20 +692,30 @@
         currentAttachment = null;
     }
 
+    // --- Settings Storage ---
     function saveSettings() {
         localStorage.setItem('cfg_provider', document.getElementById('primaryProvider').value);
-        localStorage.setItem('cfg_groq_key', document.getElementById('groqKey').value);
         localStorage.setItem('cfg_sys', document.getElementById('sysPrompt').value);
+        localStorage.setItem('cfg_groq_key', document.getElementById('groqKey').value);
+        localStorage.setItem('cfg_groq_model', document.getElementById('groqModel').value);
+        localStorage.setItem('cfg_hf_key', document.getElementById('hfKey').value);
+        localStorage.setItem('cfg_hf_model', document.getElementById('hfModel').value);
         toggleSettings();
-        document.getElementById('currentModelDisplay').innerText = document.getElementById('primaryProvider').value === 'groq' ? 'Llama 3' : 'Mistral';
+        document.getElementById('currentModelDisplay').innerText = 
+            document.getElementById('primaryProvider').value === 'groq' ? 'Groq' : 'HF';
     }
 
     (function init() {
         document.getElementById('primaryProvider').value = localStorage.getItem('cfg_provider') || 'groq';
-        document.getElementById('groqKey').value = localStorage.getItem('cfg_groq_key') || '';
         document.getElementById('sysPrompt').value = localStorage.getItem('cfg_sys') || '';
+        document.getElementById('groqKey').value = localStorage.getItem('cfg_groq_key') || '';
+        document.getElementById('groqModel').value = localStorage.getItem('cfg_groq_model') || 'llama-3.1-70b-versatile';
+        document.getElementById('hfKey').value = localStorage.getItem('cfg_hf_key') || '';
+        document.getElementById('hfModel').value = localStorage.getItem('cfg_hf_model') || 'mistralai/Mixtral-8x7B-Instruct-v0.1';
+        
         if(chats.length > 0) renderSidebar(); else startNewChat();
     })();
 </script>
+
 </body>
 </html>
