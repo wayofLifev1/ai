@@ -546,11 +546,6 @@
     wrapper.appendChild(bubble);
     container.appendChild(wrapper);
 
-    // Initial highlight for non-streaming or completed messages
-    if(role === 'ai') {
-        wrapper.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
-    }
-
     scrollToBottom();
 }
 
