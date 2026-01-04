@@ -748,7 +748,18 @@ function scrollToBottom() {
         document.getElementById('currentModelDisplay').innerText = 
             document.getElementById('primaryProvider').value === 'groq' ? 'Groq' : 'HF';
     }
+    // --- Helper Functions ---
+    function stopGeneration() {
+        if (abortController) abortController.abort();
+        endStreamingState();
+    }
 
+    function endStreamingState() {
+        document.getElementById('sendBtn').style.display = 'flex';
+        document.getElementById('stopBtn').style.display = 'none';
+        document.getElementById('userInput').focus();
+    }
+        
     (function init() {
         document.getElementById('primaryProvider').value = localStorage.getItem('cfg_provider') || 'groq';
         document.getElementById('sysPrompt').value = localStorage.getItem('cfg_sys') || '';
