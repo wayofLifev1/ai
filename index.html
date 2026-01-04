@@ -717,20 +717,16 @@ function scrollToBottom() {
 
 
 
-        async function callHF(key, model, sys, prompt, imageUrl) {
             async function callHF(key, model, sys, prompt, imageUrl) {
-        // FIX: Use the standard Inference API URL (No /v1/chat/completions)
         const url = `https://api-inference.huggingface.co/models/${model}`;
         
         let payload = {};
 
         if (imageUrl) {
-            // Vision Payload for HF Inference API
-            // Note: Not all HF models accept images via the free API. 
-            // This structure works for many standard pipelines.
+            // Vision Payload
             payload = {
                 inputs: prompt, 
-                image: imageUrl, // Sends the Base64 image directly
+                image: imageUrl, 
                 parameters: { max_new_tokens: 500 }
             };
         } else {
@@ -751,7 +747,6 @@ function scrollToBottom() {
         });
 
         if (!response.ok) {
-            // Handle specific HF errors
             const errText = await response.text();
             throw new Error(`HF Error ${response.status}: ${errText}`);
         }
@@ -759,11 +754,8 @@ function scrollToBottom() {
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
-        // Return generated text
         return Array.isArray(data) ? data[0].generated_text : data.generated_text;
     }
-
-
 
     // --- File Handling ---
     function handleFile() {
