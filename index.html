@@ -411,21 +411,23 @@
     });
 
     // Custom Renderer for Code Blocks
-    const renderer = new marked.Renderer();
+        const renderer = new marked.Renderer();
     renderer.code = function(code, language) {
         const lang = language || 'text';
+        // FIX: Escape single quotes to prevent breaking the onclick attribute
+        const encoded = encodeURIComponent(code).replace(/'/g, "%27");
         return `
         <div class="code-block-wrapper">
             <div class="code-header">
                 <span>${lang}</span>
-                <button onclick="copyToClipboard(this, \`${encodeURIComponent(code)}\`)">
+                <button onclick="copyToClipboard(this, '${encoded}')">
                     <span class="material-icons-round" style="font-size:14px;">content_copy</span> Copy
                 </button>
             </div>
             <pre><code class="hljs ${lang}">${hljs.highlightAuto(code).value}</code></pre>
         </div>`;
     };
-    marked.use({ renderer });
+
 
     // --- State ---
     let chats = JSON.parse(localStorage.getItem('chats') || '[]');
