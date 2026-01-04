@@ -272,84 +272,8 @@
     </div>
 
     <script src="env.js"></script>
-
-    chatHistory.map(m => ({
-                    role: m.role === "user" ? "user" : "model",
-                    parts: [{ text: m.content }]
-                }));
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEYS.GEMINI}`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: parts })
-                });
-                const data = await res.json();
-                return data.candidates[0].content.parts[0].text;
-            } catch (e) { return null; }
-        }
-
-        // --- API 3: FLUX ART ---
-        async function generateArt(prompt) {
-            try {
-                // Remove trigger word for cleaner prompt
-                const cleanPrompt = prompt.replace(/^(draw|image|generate|paint|lukis)\s/i, '');
-                const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
-                    headers: { Authorization: `Bearer ${KEYS.HF}`, "Content-Type": "application/json" },
-                    method: "POST", body: JSON.stringify({ inputs: cleanPrompt }),
-                });
-                
-                if (!res.ok) throw new Error();
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                
-                const div = document.createElement('div');
-                div.className = "msg-row a-row";
-                div.innerHTML = `
-                    <div class="msg a-msg" style="padding:0; background:transparent; border:none;">
-                        <div class="art-wrapper">
-                            <img src="${url}" class="art-result" onload="scrollToBottom()">
-                            <div class="art-tag">FLUX.1</div>
-                        </div>
-                    </div>`;
-                dom.feed.appendChild(div);
-                scrollToBottom();
-            } catch (e) {
-                addMessage("⚠️ Art generation failed. Server busy.", 'ai');
-            }
-        }
-
-        // --- UI UTILS ---
-        function addMessage(text, sender) {
-            const row = document.createElement('div');
-            row.className = `msg-row ${sender === 'user' ? 'u-row' : 'a-row'}`;
-            
-            const bubble = document.createElement('div');
-            bubble.className = `msg ${sender === 'user' ? 'u-msg' : 'a-msg'}`;
-            
-            if (sender === 'ai') {
-                // Render Markdown
-                bubble.innerHTML = marked.parse(text);
-                // Wrap Pre tags in Mac-style window
-                bubble.querySelectorAll('pre').forEach(pre => {
-                    const code = pre.querySelector('code').innerText;
-                    const wrapper = document.createElement('div');
-                    
-                    // Create Header
-                    const header = document.createElement('div');
-                    header.className = 'code-header';
-                    header.innerHTML = `
-                        <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
-                        <button class="copy-btn">Copy</button>
-                    `;
-                    
-                    // Copy Logic
-                    header.querySelector('.copy-btn').onclick = function() {
-                        navigator.clipboard.writeText(code);
-                        this.innerText = 'Copied!';
-                        setTimeout(() => this.innerText = 'Copy', 2000);
-                    };
-
-                    pre.parentNode.insertBefore(wrapper, pre);
-                    wrapper.appendChild(header);
-    <script>
+    
+        <script>
         // --- CONFIGURATION ---
         const dom = {
             inp: document.getElementById('inp'),
