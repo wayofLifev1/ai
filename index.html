@@ -397,12 +397,20 @@
         if(this.value === '') this.style.height = '24px';
     });
     
+        // Handle Enter Key to Send
     userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
+        // Check if the key pressed is 'Enter'
+        if (e.key === 'Enter') {
+            // If Shift is NOT pressed, we want to send
+            if (!e.shiftKey) {
+                e.preventDefault(); // STOP the new line
+                sendMessage();      // SEND the message
+            }
+            // If Shift IS pressed, the code does nothing, 
+            // allowing the browser to create a new line as usual.
         }
     });
+
 
     // --- UI Logic ---
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
