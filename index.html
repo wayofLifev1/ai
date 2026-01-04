@@ -2,396 +2,443 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
-    <title>Ultimate AI: Master</title>
+    <title>Ultimate AI: Workspace</title>
     <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark-reasonable.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
     <style>
-        /* --- MASTER VARIABLES --- */
-        :root {
-            --bg: #000000;
-            --surface: #141414;
-            --surface-2: #222222;
-            --accent: #007aff;
-            --text: #ffffff;
-            --dim: #888;
-            --border: #333;
+        :root { 
+            --bg: #000; --sidebar: #0a0a0a; --surface: #141414; 
+            --border: #222; --accent: #2563eb; --text: #eee; --dim: #888;
+        }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; display: flex; height: 100dvh; overflow: hidden; }
+
+        /* --- SIDEBAR (History) --- */
+        #sidebar {
+            width: 260px; background: var(--sidebar); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; transition: transform 0.3s ease; z-index: 100;
+        }
+        .side-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .new-chat-btn { width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+        #chat-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .chat-item { 
+            padding: 10px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; color: var(--dim); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+        .chat-item:hover { background: var(--surface); color: white; }
+        .chat-item.active { background: #1f1f1f; color: white; border: 1px solid #333; }
+        
+        /* Mobile Sidebar Toggle */
+        @media (max-width: 768px) {
+            #sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 80%; }
+            #sidebar.open { transform: translateX(0); }
+            .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; }
+            .overlay.active { display: block; }
         }
 
-        body { 
-            background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; 
-            margin: 0; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; 
-        }
+        /* --- MAIN CONTENT --- */
+        #main { flex: 1; display: flex; flex-direction: column; position: relative; }
 
-        /* HEADER */
-        header {
-            height: 60px; padding: 0 16px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            background: rgba(20,20,20,0.9); backdrop-filter: blur(20px); z-index: 50;
+        /* Header */
+        header { 
+            height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); 
         }
-        .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
-        .tag { font-size: 9px; background: linear-gradient(45deg, #007aff, #00c6ff); padding: 3px 6px; border-radius: 4px; color: white; font-weight: bold; }
-        .head-btn { background: none; border: none; font-size: 18px; padding: 8px; cursor: pointer; opacity: 0.7; transition: 0.2s; }
-        .head-btn:hover { opacity: 1; }
+        .menu-btn { background: none; border: none; font-size: 20px; color: white; cursor: pointer; }
+        .persona-select { background: #111; border: 1px solid #333; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
 
-        /* FEED */
-        #feed { 
-            flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 24px; 
-            scroll-behavior: smooth;
-        }
+        /* Chat Feed */
+        #feed { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
         
-        .msg-row { display: flex; width: 100%; animation: fadeUp 0.3s ease; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg { max-width: 800px; margin: 0 auto; width: 100%; display: flex; gap: 15px; }
+        .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .u-av { background: #333; } .a-av { background: var(--accent); }
+        .msg-content { flex: 1; font-size: 15px; line-height: 1.6; padding-top: 4px; }
         
-        .user-row { justify-content: flex-end; }
-        .ai-row { justify-content: flex-start; }
-        
-        .msg { 
-            max-width: 88%; padding: 12px 18px; border-radius: 20px; font-size: 15px; line-height: 1.6; 
-            position: relative; word-wrap: break-word; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        .user-msg { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
-        .ai-msg { background: var(--surface-2); color: #ececec; border-bottom-left-radius: 4px; border: 1px solid var(--border); }
-        
-        /* ATTACHMENT CARDS */
-        .file-card {
-            background: rgba(255,255,255,0.08); border-radius: 12px; padding: 10px; margin-bottom: 10px;
-            display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .file-icon { font-size: 24px; }
-        .file-info { display: flex; flex-direction: column; overflow: hidden; }
-        .file-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-type { font-size: 11px; color: rgba(255,255,255,0.5); }
-        .img-preview { width: 100%; border-radius: 12px; margin-bottom: 8px; display: block; max-width: 300px; border: 1px solid #333; }
-        .model-tag { font-size: 10px; color: #555; margin-top: 5px; text-align: right; display: block; font-family: monospace; }
+        /* Artifacts / Code */
+        pre { background: #111; padding: 12px; border-radius: 8px; border: 1px solid #333; overflow-x: auto; position: relative; }
+        .preview-btn { position: absolute; top: 10px; right: 10px; background: #222; border: 1px solid #444; color: white; font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+        .preview-btn:hover { background: var(--accent); border-color: var(--accent); }
 
-        /* INPUT AREA */
-        .input-area {
-            background: var(--bg); border-top: 1px solid var(--border); padding: 12px 16px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
-            display: flex; flex-direction: column; gap: 10px; z-index: 50;
+        /* Input Area */
+        .input-wrapper { max-width: 800px; margin: 0 auto; width: 100%; padding: 15px; }
+        .input-box { 
+            background: var(--surface); border: 1px solid var(--border); border-radius: 24px; 
+            padding: 8px 12px; display: flex; align-items: flex-end; gap: 10px; position: relative;
         }
         
-        .preview-zone { 
-            display: none; background: var(--surface-2); padding: 8px 12px; border-radius: 12px; 
-            font-size: 12px; color: var(--dim); border: 1px solid var(--border); align-items: center; justify-content: space-between;
-        }
+        .file-preview { position: absolute; bottom: 100%; left: 0; background: #222; padding: 8px; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; display: none; align-items: center; gap: 10px; font-size: 12px; }
         
-        .controls { display: flex; align-items: flex-end; gap: 8px; }
-        
-        .tool-btn { 
-            width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); 
-            background: var(--surface); color: var(--text); display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 18px; flex-shrink: 0; transition: 0.2s;
-        }
-        .tool-btn:active { transform: scale(0.95); background: #333; }
-        
-        textarea {
-            flex: 1; background: var(--surface); border: 1px solid var(--border); color: white;
-            padding: 12px 16px; border-radius: 24px; font-size: 16px; resize: none; max-height: 120px; font-family: inherit;
-        }
-        
-        #send-btn {
-            width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: white; border: none;
-            display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; flex-shrink: 0;
-            box-shadow: 0 0 10px rgba(0, 122, 255, 0.4);
-        }
+        textarea { flex: 1; background: transparent; border: none; color: white; resize: none; max-height: 120px; padding: 10px; font-family: inherit; font-size: 16px; }
+        .icon-btn { width: 36px; height: 36px; border-radius: 50%; background: transparent; border: none; color: #888; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { color: white; background: #222; }
+        .send-btn { background: white; color: black; }
+        .send-btn:hover { background: #ddd; }
 
-        /* MODAL */
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; }
-        .modal-box { background: #181818; padding: 24px; border-radius: 24px; width: 90%; max-width: 360px; border: 1px solid #444; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; color: #888; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .input-group input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; font-size: 14px; box-sizing: border-box; transition: 0.2s; }
-        .input-group input:focus { border-color: var(--accent); outline: none; }
-        .save-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 15px; margin-top: 5px; }
+        /* Live Preview Modal */
+        #artifact-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; flex-direction: column; }
+        .am-head { height: 50px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #111; }
+        #artifact-frame { flex: 1; background: white; border: none; width: 100%; height: 100%; }
+
+        /* Settings Modal */
+        #settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; }
+        .settings-box { background: #141414; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; border: 1px solid #333; }
+        .s-field { margin-bottom: 15px; }
+        .s-field label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+        .s-field input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; }
         
-        pre { background: #0b0b0b !important; padding: 15px; border-radius: 12px; border: 1px solid #333; overflow-x: auto; margin: 15px 0; }
-        code { font-family: 'Fira Code', monospace; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <div id="modal">
-        <div class="modal-box">
-            <h2 style="margin-top:0; font-size:20px; margin-bottom:20px">⚙️ Connectivity</h2>
-            <div class="input-group">
-                <label>Gemini API (Best for Files)</label>
-                <input type="password" id="key-gemini" placeholder="AIza...">
+    <div class="overlay" id="overlay" onclick="toggleSide()"></div>
+
+    <div id="sidebar">
+        <div class="side-header">
+            <span style="font-weight:700">Ultimate AI</span>
+            <button class="icon-btn" onclick="openSettings()">⚙️</button>
+        </div>
+        <div style="padding:15px 10px 0 10px;">
+            <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+        </div>
+        <div id="chat-list">
             </div>
-            <div class="input-group">
-                <label>Groq API (Fast Text)</label>
-                <input type="password" id="key-groq" placeholder="gsk_...">
+    </div>
+
+    <div id="main">
+        <header>
+            <div style="display:flex; align-items:center; gap:10px">
+                <button class="menu-btn" onclick="toggleSide()">☰</button>
+                <select id="persona" class="persona-select" onchange="changePersona()">
+                    <option value="helpful">🤖 Assistant</option>
+                    <option value="coder">👨‍💻 Coder</option>
+                    <option value="creative">🎨 Creative</option>
+                    <option value="brief">⚡ Brief</option>
+                </select>
             </div>
-            <div class="input-group">
-                <label>HuggingFace (Art & Backup Vision)</label>
-                <input type="password" id="key-hf" placeholder="hf_...">
+            <div id="model-status" style="font-size:11px; color:#555">READY</div>
+        </header>
+
+        <div id="feed">
             </div>
-            <button class="save-btn" onclick="saveKeys()">Save & Connect</button>
-            <button id="install-btn" class="save-btn" style="background:#28cd41; display:none; margin-top:10px">📲 Install App</button>
-            <button onclick="dom.modal.style.display='none'" style="width:100%; padding:12px; background:none; border:none; color:#666; margin-top:5px; font-weight:600">Cancel</button>
+
+        <div class="input-wrapper">
+            <div id="file-prev" class="file-preview">
+                <span id="fp-name">file.pdf</span>
+                <button onclick="clearFile()" style="background:none; border:none; color:red; cursor:pointer">✕</button>
+            </div>
+            <div class="input-box">
+                <input type="file" id="file-in" style="display:none" onchange="handleFile(this)">
+                <button class="icon-btn" onclick="document.getElementById('file-in').click()">📎</button>
+                <button class="icon-btn" onclick="toggleVoice()" id="mic-btn">🎙️</button>
+                <textarea id="inp" rows="1" placeholder="Type a message..."></textarea>
+                <button class="icon-btn send-btn" onclick="send()">➤</button>
+            </div>
         </div>
     </div>
 
-    <header>
-        <div class="brand"><span>✦</span> Ultimate AI <span class="tag">MASTER</span></div>
-        <div style="display:flex; gap: 8px;">
-            <button class="head-btn" onclick="clearChat()">🗑️</button>
-            <button class="head-btn" onclick="dom.modal.style.display='flex'">⚙️</button>
+    <div id="artifact-modal">
+        <div class="am-head">
+            <span style="font-weight:600">Live Preview</span>
+            <button onclick="closePreview()" style="background:none; border:none; color:white; cursor:pointer">Close ✕</button>
         </div>
-    </header>
+        <iframe id="artifact-frame"></iframe>
+    </div>
 
-    <div id="feed"></div>
-
-    <div class="input-area">
-        <div id="preview-zone" class="preview-zone">
-            <div style="display:flex; align-items:center; gap:10px">
-                <span id="preview-icon" style="font-size:20px">📄</span>
-                <div style="display:flex; flex-direction:column">
-                    <span id="preview-name" style="color:white; font-weight:600">file.pdf</span>
-                    <span style="font-size:10px; color:#666">Attached</span>
-                </div>
+    <div id="settings-modal">
+        <div class="settings-box">
+            <h2 style="margin-top:0">⚙️ API Keys</h2>
+            <div class="s-field">
+                <label>Gemini API</label>
+                <input type="password" id="k-gem" placeholder="AIza...">
             </div>
-            <button onclick="clearFile()" style="background:none; border:none; color:#ff453a; font-weight:bold; cursor:pointer">✕</button>
-        </div>
-
-        <div class="controls">
-            <input type="file" id="file-input" accept="image/*,application/pdf,text/plain" style="display:none" onchange="handleFile(this)">
-            
-            <button class="tool-btn" onclick="document.getElementById('file-input').click()">📎</button>
-            <button class="tool-btn" id="mic-btn" onclick="toggleVoice()">🎙️</button>
-            
-            <textarea id="inp" rows="1" placeholder="Message..."></textarea>
-            
-            <button id="send-btn" onclick="handleSend()">➤</button>
+            <div class="s-field">
+                <label>Groq API</label>
+                <input type="password" id="k-groq" placeholder="gsk_...">
+            </div>
+            <div class="s-field">
+                <label>HuggingFace API</label>
+                <input type="password" id="k-hf" placeholder="hf_...">
+            </div>
+            <button onclick="saveKeys()" class="new-chat-btn">Save Settings</button>
+            <button onclick="document.getElementById('settings-modal').style.display='none'" style="width:100%; background:none; border:none; color:#666; margin-top:10px">Close</button>
         </div>
     </div>
 
     <script>
-        // --- 1. CONFIG ---
+        // --- STATE & CONFIG ---
+        const state = {
+            keys: { gem: "", groq: "", hf: "" },
+            chats: [], // Array of {id, title, msgs}
+            activeChatId: null,
+            file: null,
+            personas: {
+                helpful: "You are a helpful AI assistant.",
+                coder: "You are an expert Senior Developer. Write clean, efficient code. When writing HTML, always put it in a single block.",
+                creative: "You are a creative writer. Be vivid and imaginative.",
+                brief: "Be extremely concise. No fluff."
+            }
+        };
+
         const dom = {
             feed: document.getElementById('feed'),
             inp: document.getElementById('inp'),
-            modal: document.getElementById('modal'),
-            preview: document.getElementById('preview-zone'),
-            keys: { groq: document.getElementById('key-groq'), gemini: document.getElementById('key-gemini'), hf: document.getElementById('key-hf') }
+            list: document.getElementById('chat-list'),
+            preview: document.getElementById('file-prev'),
+            sidebar: document.getElementById('sidebar'),
+            overlay: document.getElementById('overlay')
         };
 
-        let state = {
-            keys: { groq: "", gemini: "", hf: "" },
-            history: [],
-            currentFile: null,
-            installPrompt: null
-        };
-
-        // --- 2. LOAD ---
+        // --- INIT ---
         window.onload = () => {
-            const k = localStorage.getItem('uai_keys_v4');
+            // Load Keys
+            const k = localStorage.getItem('uai_keys');
             if(k) {
                 state.keys = JSON.parse(k);
-                dom.keys.groq.value = state.keys.groq;
-                dom.keys.gemini.value = state.keys.gemini;
-                dom.keys.hf.value = state.keys.hf;
-            } else dom.modal.style.display = 'flex';
+                document.getElementById('k-gem').value = state.keys.gem;
+                document.getElementById('k-groq').value = state.keys.groq;
+                document.getElementById('k-hf').value = state.keys.hf;
+            } else openSettings();
 
-            const h = localStorage.getItem('uai_hist_v4');
-            if(h) {
-                state.history = JSON.parse(h);
-                state.history.forEach(renderMessage);
-            } else {
-                renderMessage({ role: 'ai', content: "System Online.\n\nI can see, hear, and create." });
-            }
+            // Load Chats
+            const c = localStorage.getItem('uai_chats');
+            if(c) state.chats = JSON.parse(c);
+            
+            if(state.chats.length === 0) newChat();
+            else loadChat(state.chats[0].id);
+
+            renderChatList();
         };
 
-        // --- 3. FILE SYSTEM ---
-        function handleFile(input) {
-            const file = input.files[0];
-            if(!file) return;
-            if(file.size > 20 * 1024 * 1024) return alert("File max 20MB");
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                state.currentFile = { name: file.name, type: file.type, data: e.target.result };
-                dom.preview.style.display = 'flex';
-                document.getElementById('preview-name').innerText = file.name;
-                document.getElementById('preview-icon').innerText = file.type.startsWith('image/') ? '🖼️' : '📄';
-            };
-            reader.readAsDataURL(file);
+        // --- CHAT MANAGEMENT ---
+        function newChat() {
+            const id = Date.now().toString();
+            const newSession = { id: id, title: "New Chat", msgs: [] };
+            state.chats.unshift(newSession);
+            loadChat(id);
+            if(window.innerWidth < 768) toggleSide();
         }
-        function clearFile() { state.currentFile = null; dom.preview.style.display='none'; document.getElementById('file-input').value=""; }
 
-        // --- 4. MAIN INTELLIGENCE ---
-        async function handleSend() {
-            const text = dom.inp.value.trim();
-            const file = state.currentFile;
+        function loadChat(id) {
+            state.activeChatId = id;
+            const chat = state.chats.find(c => c.id === id);
+            dom.feed.innerHTML = '';
             
-            if(!text && !file) return;
-
-            // Render User
-            const userMsg = { role: 'user', content: text, file: file ? {...file} : null };
-            renderMessage(userMsg);
-            state.history.push(userMsg);
+            if(chat.msgs.length === 0) {
+                // Intro message
+                addMsgToFeed({role: 'ai', content: "Hello! I am ready. Select a persona above 🤖 or upload a file 📎."}, false);
+            } else {
+                chat.msgs.forEach(m => addMsgToFeed(m, false));
+            }
+            
+            renderChatList();
             saveData();
+        }
+
+        function renderChatList() {
+            dom.list.innerHTML = '';
+            state.chats.forEach(c => {
+                const div = document.createElement('div');
+                div.className = `chat-item ${c.id === state.activeChatId ? 'active' : ''}`;
+                div.innerHTML = `<span>${c.title}</span> <span style="float:right; opacity:0.5; font-size:10px" onclick="deleteChat('${c.id}', event)">✕</span>`;
+                div.onclick = (e) => { if(e.target.tagName !== 'SPAN') loadChat(c.id); };
+                dom.list.appendChild(div);
+            });
+        }
+
+        function deleteChat(id, e) {
+            e.stopPropagation();
+            if(!confirm("Delete chat?")) return;
+            state.chats = state.chats.filter(c => c.id !== id);
+            if(state.chats.length === 0) newChat();
+            else if(state.activeChatId === id) loadChat(state.chats[0].id);
+            else renderChatList();
+            saveData();
+        }
+
+        // --- MESSAGING ---
+        async function send() {
+            const txt = dom.inp.value.trim();
+            if(!txt && !state.file) return;
+
+            // 1. Add User Msg
+            const userMsg = { role: 'user', content: txt, file: state.file ? {...state.file} : null };
+            addMsg(userMsg);
             
-            dom.inp.value = ''; clearFile();
-            const loader = showLoader();
-            let response = null;
-            let usedModel = "";
+            // Update Title if new
+            const activeChat = state.chats.find(c => c.id === state.activeChatId);
+            if(activeChat.msgs.length === 1) {
+                activeChat.title = txt.substring(0, 30) || "Image Upload";
+                renderChatList();
+            }
+
+            dom.inp.value = '';
+            clearFile();
+
+            // 2. Add Loader
+            const loaderId = "l-" + Date.now();
+            dom.feed.insertAdjacentHTML('beforeend', `<div id="${loaderId}" class="msg"><div class="avatar a-av">AI</div><div class="msg-content">...</div></div>`);
+            scrollToBottom();
 
             try {
-                // A. ART GENERATION (HF)
-                if(/^(draw|paint|generate)/i.test(text) && !file) {
-                    if(!state.keys.hf) throw new Error("Need HuggingFace Key");
-                    await generateArt(text);
-                    removeLoader(loader); 
-                    return;
+                let response = "";
+                // Router
+                if(/^(draw|paint)/i.test(txt) && !userMsg.file) {
+                    await generateArt(txt);
+                } else {
+                    response = await getAIResponse(txt, userMsg.file);
+                    addMsg({ role: 'ai', content: response });
                 }
-
-                // B. VISION / FILES
-                if(file) {
-                    if(state.keys.gemini) {
-                        // Priority 1: Gemini (Best for everything)
-                        usedModel = "Gemini 1.5 Flash";
-                        response = await callGeminiMultimodal(text, file);
-                    } 
-                    else if(file.type.startsWith('image/') && state.keys.hf) {
-                        // Priority 2: Hugging Face (Backup for Images)
-                        usedModel = "HF (ViLT-B32)";
-                        response = await callHuggingFaceVision(text, file);
-                    } 
-                    else {
-                        throw new Error("For files, I need a Gemini Key (Best) or HuggingFace Key (Images only).");
-                    }
-                } 
-                // C. TEXT ONLY
-                else {
-                    if(state.keys.groq) { usedModel = "Llama 3 70B"; response = await callGroq(); }
-                    else if(state.keys.gemini) { usedModel = "Gemini 1.5"; response = await callGeminiMultimodal(text, null); }
-                    else throw new Error("Please add an API Key.");
-                }
-
-                removeLoader(loader);
-                if(response) {
-                    const aiMsg = { role: 'ai', content: response, model: usedModel };
-                    renderMessage(aiMsg);
-                    state.history.push(aiMsg);
-                    saveData();
-                }
-
             } catch(e) {
-                removeLoader(loader);
-                renderMessage({ role: 'ai', content: `⚠️ **Error:** ${e.message}` });
+                addMsg({ role: 'ai', content: "⚠️ Error: " + e.message });
+            }
+            
+            document.getElementById(loaderId)?.remove();
+        }
+
+        function addMsg(msg) {
+            // Add to data
+            const chat = state.chats.find(c => c.id === state.activeChatId);
+            chat.msgs.push(msg);
+            saveData();
+            addMsgToFeed(msg, true);
+        }
+
+        function addMsgToFeed(msg, animate) {
+            const div = document.createElement('div');
+            div.className = "msg";
+            
+            let content = "";
+            if(msg.file) {
+                 if(msg.file.type.startsWith('image')) content += `<img src="${msg.file.data}" style="max-width:200px; border-radius:8px; display:block; margin-bottom:10px">`;
+                 else content += `<div style="background:#222; padding:10px; border-radius:8px; margin-bottom:10px">📄 ${msg.file.name}</div>`;
+            }
+            
+            content += marked.parse(msg.content || "");
+
+            div.innerHTML = `
+                <div class="avatar ${msg.role==='user'?'u-av':'a-av'}">${msg.role==='user'?'U':'AI'}</div>
+                <div class="msg-content">${content}</div>
+            `;
+            
+            dom.feed.appendChild(div);
+            
+            // Artifact Detection (Live Preview)
+            if(msg.role === 'ai') {
+                div.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                    // Check if HTML/SVG
+                    if(block.classList.contains('language-html') || block.classList.contains('language-xml')) {
+                        const btn = document.createElement('button');
+                        btn.className = 'preview-btn';
+                        btn.innerText = '👁️ Preview';
+                        btn.onclick = () => showPreview(block.innerText);
+                        block.parentElement.appendChild(btn);
+                    }
+                });
+            }
+            
+            scrollToBottom();
+        }
+
+        // --- API ENGINES ---
+        async function getAIResponse(txt, file) {
+            const pKey = document.getElementById('persona').value;
+            const systemPrompt = state.personas[pKey];
+
+            if(file) {
+                // Must use Gemini
+                if(!state.keys.gem) throw new Error("Gemini Key required for files");
+                return await callGemini(txt, file, systemPrompt);
+            } else {
+                // Prefer Groq
+                if(state.keys.groq) return await callGroq(txt, systemPrompt);
+                if(state.keys.gem) return await callGemini(txt, null, systemPrompt);
+                throw new Error("No API Keys configured");
             }
         }
 
-        // --- 5. ENGINES ---
-        
-        // 1. Gemini (Files & Text)
-        async function callGeminiMultimodal(prompt, fileObj) {
-            const parts = [];
-            if(prompt) parts.push({ text: prompt });
-            if(fileObj) parts.push({ inlineData: { mimeType: fileObj.type, data: fileObj.data.split(',')[1] } });
-
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.keys.gemini}`, {
-                method: "POST", headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ contents: [{ parts: parts }] })
-            });
-            const data = await res.json();
-            if(data.error) throw new Error(data.error.message);
-            return data.candidates[0].content.parts[0].text;
-        }
-
-        // 2. Groq (Fast Text)
-        async function callGroq() {
-            const msgs = [{role:"system", content:"You are a helpful AI."}, ...state.history.map(m => ({role: m.role==='user'?'user':'assistant', content: m.content || "Attached file"}))];
+        async function callGroq(txt, sys) {
+            // Get last 6 msgs for context
+            const chat = state.chats.find(c => c.id === state.activeChatId);
+            const hist = chat.msgs.slice(-6).map(m => ({role: m.role==='user'?'user':'assistant', content: m.content || "[File]"}));
+            
             const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: {Authorization: `Bearer ${state.keys.groq}`, "Content-Type": "application/json"},
-                body: JSON.stringify({model: "llama-3.3-70b-versatile", messages: msgs})
+                method: "POST", headers: {Authorization: `Bearer ${state.keys.groq}`, "Content-Type":"application/json"},
+                body: JSON.stringify({model: "llama-3.3-70b-versatile", messages: [{role:"system", content:sys}, ...hist]})
             });
             return (await res.json()).choices[0].message.content;
         }
 
-        // 3. Hugging Face Vision (Backup for Images)
-        async function callHuggingFaceVision(prompt, fileObj) {
-            // Model: Visual Question Answering
-            const res = await fetch("https://api-inference.huggingface.co/models/dandelin/vilt-b32-finetuned-vqa", {
-                method: "POST", headers: { Authorization: `Bearer ${state.keys.hf}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    inputs: {
-                        image: fileObj.data.split(',')[1], // Base64
-                        question: prompt || "Describe this image"
-                    }
-                })
-            });
+        async function callGemini(txt, file, sys) {
+            let parts = [{text: sys + "\n\nUser: " + (txt || "Describe this")}];
+            if(file) parts.push({ inlineData: { mimeType: file.type, data: file.data.split(',')[1] } });
             
-            if(!res.ok) throw new Error("HF Vision Error (Model loading or busy)");
-            const data = await res.json();
-            // HF VQA returns array of scores usually, we take the top answer
-            if(Array.isArray(data) && data.length > 0) {
-                // Usually returns [{answer: "cat", score: 0.9}, ...]
-                return `**Analysis:** ${data[0].answer} (Confidence: ${Math.round(data[0].score*100)}%)`;
-            }
-            return JSON.stringify(data);
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.keys.gem}`, {
+                method: "POST", headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({ contents: [{ parts: parts }] })
+            });
+            return (await res.json()).candidates[0].content.parts[0].text;
         }
 
-        // 4. Hugging Face Art
-        async function generateArt(prompt) {
+        async function generateArt(txt) {
+            if(!state.keys.hf) throw new Error("HuggingFace Key needed for art");
             const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
-                method: "POST", headers: {Authorization: `Bearer ${state.keys.hf}`, "Content-Type": "application/json"},
-                body: JSON.stringify({inputs: prompt.replace(/^(draw|paint|generate)\s/i, '')})
+                method: "POST", headers: {Authorization: `Bearer ${state.keys.hf}`, "Content-Type":"application/json"},
+                body: JSON.stringify({inputs: txt.replace(/^(draw|paint)\s/i, '')})
             });
-            const url = URL.createObjectURL(await res.blob());
-            dom.feed.innerHTML += `<div class="msg-row ai-row"><div class="msg ai-msg"><img src="${url}" class="img-preview"><span class="model-tag">FLUX.1</span></div></div>`;
-            scrollToBottom();
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            addMsg({ role: 'ai', content: `Here is your image:\n\n![Art](${url})` }); // Markdown image
         }
 
-        // --- 6. UTILS ---
-        function renderMessage(msg) {
-            const div = document.createElement('div');
-            div.className = `msg-row ${msg.role === 'user' ? 'user-row' : 'ai-row'}`;
-            let html = "";
-            
-            if(msg.file) {
-                if(msg.file.type.startsWith('image/')) html += `<img src="${msg.file.data}" class="img-preview">`;
-                else html += `<div class="file-card"><span class="file-icon">📄</span><div class="file-info"><span class="file-name">${msg.file.name}</span><span class="file-type">${msg.file.type}</span></div></div>`;
-            }
-            if(msg.content) html += msg.role==='ai' ? marked.parse(msg.content) : msg.content;
-            if(msg.model) html += `<span class="model-tag">${msg.model}</span>`;
-
-            div.innerHTML = `<div class="msg ${msg.role === 'user' ? 'user-msg' : 'ai-msg'}">${html}</div>`;
-            dom.feed.appendChild(div);
-            div.querySelectorAll('pre code').forEach(hljs.highlightElement);
-            scrollToBottom();
+        // --- UTILS ---
+        function handleFile(input) {
+            const f = input.files[0];
+            if(!f) return;
+            const r = new FileReader();
+            r.onload = e => {
+                state.file = { name: f.name, type: f.type, data: e.target.result };
+                document.getElementById('fp-name').innerText = f.name;
+                dom.preview.style.display = 'flex';
+            };
+            r.readAsDataURL(f);
         }
-
-        function saveKeys() { state.keys = { groq: dom.keys.groq.value.trim(), gemini: dom.keys.gemini.value.trim(), hf: dom.keys.hf.value.trim() }; localStorage.setItem('uai_keys_v4', JSON.stringify(state.keys)); dom.modal.style.display = 'none'; }
-        function saveData() { localStorage.setItem('uai_hist_v4', JSON.stringify(state.history)); }
-        function showLoader() { const id="l"+Date.now(); dom.feed.insertAdjacentHTML('beforeend', `<div id="${id}" class="msg-row ai-row"><div class="msg ai-msg">Thinking...</div></div>`); scrollToBottom(); return id; }
-        function removeLoader(id) { document.getElementById(id)?.remove(); }
+        function clearFile() { state.file = null; dom.preview.style.display='none'; }
+        
+        function showPreview(code) {
+            const frame = document.getElementById('artifact-frame');
+            frame.srcdoc = code;
+            document.getElementById('artifact-modal').style.display = 'flex';
+        }
+        function closePreview() { document.getElementById('artifact-modal').style.display = 'none'; }
+        
+        function saveKeys() {
+            state.keys = { gem: document.getElementById('k-gem').value, groq: document.getElementById('k-groq').value, hf: document.getElementById('k-hf').value };
+            localStorage.setItem('uai_keys', JSON.stringify(state.keys));
+            document.getElementById('settings-modal').style.display='none';
+        }
+        function saveData() { localStorage.setItem('uai_chats', JSON.stringify(state.chats)); }
+        function openSettings() { document.getElementById('settings-modal').style.display='flex'; }
+        function toggleSide() { 
+            dom.sidebar.classList.toggle('open'); 
+            dom.overlay.classList.toggle('active');
+        }
         function scrollToBottom() { dom.feed.scrollTop = dom.feed.scrollHeight; }
-        function clearChat() { if(confirm("Clear Memory?")) { state.history=[]; saveData(); dom.feed.innerHTML=''; } }
-        
+
         // Voice
-        let recognition;
         function toggleVoice() {
-            if(!('webkitSpeechRecognition' in window)) return alert("Browser does not support Voice.");
-            recognition = new webkitSpeechRecognition();
-            recognition.onresult = (e) => dom.inp.value += e.results[0][0].transcript + " ";
-            recognition.start();
+            if(!window.webkitSpeechRecognition) return alert("Not supported");
+            const r = new webkitSpeechRecognition();
+            r.onresult = e => dom.inp.value += e.results[0][0].transcript;
+            r.start();
         }
         
-        // PWA
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); state.installPrompt = e;
-            const btn = document.getElementById('install-btn');
-            btn.style.display = 'block';
-            btn.onclick = () => { state.installPrompt.prompt(); btn.style.display='none'; };
-        });
+        dom.inp.addEventListener('input', function(){ this.style.height='auto'; this.style.height=this.scrollHeight+'px'; });
     </script>
 </body>
 </html>
