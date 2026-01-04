@@ -33,18 +33,18 @@
         }
 
         /* --- SIDEBAR --- */
-#sidebar {
-    width: 280px;
-    background: var(--bg-sidebar);
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother animation */
-    position: absolute; /* Mobile first */
-    height: 100%;
-    z-index: 1000; /* Ensure it is above everything */
-    transform: translateX(-100%);
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1); /* Shadow for depth */
-}
+        #sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother animation */
+            position: absolute; /* Mobile first */
+            height: 100%;
+            z-index: 1000; /* Ensure it is above everything */
+            transform: translateX(-100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); /* Shadow for depth */
+        }
 
         @media (min-width: 768px) {
             #sidebar { position: relative; transform: translateX(0); }
@@ -86,11 +86,12 @@
             font-size: 0.85rem; background: #f0f4f9; padding: 6px 12px; border-radius: 8px; 
             color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap:5px;
         }
-/* Custom Scrollbar for Webkit (Chrome/Edge) */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        /* Custom Scrollbar for Webkit (Chrome/Edge) */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
         /* CHAT CONTAINER */
         #chatContainer {
             flex: 1;
@@ -238,12 +239,12 @@
         .section-title { font-size: 0.8rem; font-weight: 700; color: var(--primary); margin-top: 15px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 24px; cursor: pointer; font-weight: 500; font-size: 1rem; margin-top: 15px; }
-/* Add this anywhere in your <style> tag */
-.mobile-close { display: flex; }
+        
+        .mobile-close { display: flex; }
 
-@media (min-width: 768px) {
-    .mobile-close { display: none !important; }
-}
+        @media (min-width: 768px) {
+            .mobile-close { display: none !important; }
+        }
         
     </style>
 </head>
@@ -301,7 +302,7 @@
                     <span class="material-icons-round">add_circle_outline</span>
                 </button>
                 <textarea id="userInput" placeholder="Ask anything..." rows="1" enterkeyhint="send"></textarea>
-   <button class="icon-btn send" id="sendBtn" onclick="sendMessage()">
+                <button class="icon-btn send" id="sendBtn" onclick="sendMessage()">
                     <span class="material-icons-round">send</span>
                 </button>
                 <button class="icon-btn" id="stopBtn" onclick="stopGeneration()" style="display:none; color: #b3261e;">
@@ -310,7 +311,7 @@
             </div>
         </div>
         <div style="text-align: center; font-size: 0.7rem; color: #8e918f; margin-top: 10px;">
-            Gemini may display inaccurate info, so double-check its responses.
+            a.i may display inaccurate info, so double-check its responses.
         </div>
     </div>
     
@@ -401,7 +402,7 @@
         this.style.height = (this.scrollHeight) + 'px';
         if(this.value === '') this.style.height = '24px';
     });
-        // Handle Enter Key to Send
+    // Handle Enter Key to Send
     userInput.addEventListener('keydown', (e) => {
         // Check if the key is 'Enter' OR keycode is 13 (better for mobile)
         if (e.key === 'Enter' || e.keyCode === 13) {
@@ -409,14 +410,9 @@
             if (!e.shiftKey) {
                 e.preventDefault(); // STOP the new line
                 sendMessage();      // SEND the message
-                
-                // Optional: Close keyboard on mobile after sending
-                // document.getElementById('userInput').blur(); 
             }
         }
     });
-        
-
 
     // --- UI Logic ---
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
@@ -460,7 +456,12 @@
     function startNewChat() {
         currentChatId = Date.now().toString();
         chats.unshift({ id: currentChatId, title: 'New Chat', messages: [] });
-        localStorage.setItem('chats', JSON.stringify(chats));
+        
+        // FIX: Add try-catch to prevent storage crash
+        try {
+            localStorage.setItem('chats', JSON.stringify(chats));
+        } catch(e) { console.error("Storage full"); }
+
         document.getElementById('chatContainer').innerHTML = '';
         document.getElementById('emptyState').style.display = 'block';
         renderSidebar();
@@ -486,7 +487,9 @@
         e.stopPropagation();
         if(confirm('Delete this conversation?')) {
             chats = chats.filter(c => c.id !== id);
-            localStorage.setItem('chats', JSON.stringify(chats));
+            try {
+                localStorage.setItem('chats', JSON.stringify(chats));
+            } catch(e) {}
             if(currentChatId === id) startNewChat();
             else renderSidebar();
         }
@@ -494,72 +497,70 @@
 
     // --- Message Rendering ---
     function appendMessageToUI(role, text, image = null, isStreaming = false) {
-    document.getElementById('emptyState').style.display = 'none';
-    const container = document.getElementById('chatContainer');
-    
-    // 1. Handle Streaming Updates (AI only)
-    if (isStreaming && role === 'ai') {
-        const lastWrapper = container.lastElementChild;
-        if (lastWrapper && lastWrapper.classList.contains('ai')) {
-            const msgContent = lastWrapper.querySelector('.message');
-            msgContent.innerHTML = marked.parse(text) + '<span class="cursor"></span>';
-            
-            // Only highlight code blocks if they are complete (simple check)
-            if (text.includes('```') && text.split('```').length % 2 !== 0) {
-                 // code block is closed, safe to highlight
-                 lastWrapper.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
+        document.getElementById('emptyState').style.display = 'none';
+        const container = document.getElementById('chatContainer');
+        
+        // 1. Handle Streaming Updates (AI only)
+        if (isStreaming && role === 'ai') {
+            const lastWrapper = container.lastElementChild;
+            if (lastWrapper && lastWrapper.classList.contains('ai')) {
+                const msgContent = lastWrapper.querySelector('.message');
+                msgContent.innerHTML = marked.parse(text) + '<span class="cursor"></span>';
+                
+                // Only highlight code blocks if they are complete (simple check)
+                if (text.includes('```') && text.split('```').length % 2 !== 0) {
+                     // code block is closed, safe to highlight
+                     lastWrapper.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
+                }
+                scrollToBottom();
+                return;
             }
-            scrollToBottom();
-            return;
         }
+
+        // 2. Create New Message Wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = `message-wrapper ${role}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.innerHTML = role === 'ai' ? '<span class="material-icons-round" style="font-size:20px;">smart_toy</span>' : '';
+        if(role === 'ai') wrapper.appendChild(avatar);
+
+        const bubble = document.createElement('div');
+        bubble.className = `message ${role}`;
+
+        let contentHtml = '';
+        
+        // Handle Image
+        if (image && role === 'user') {
+            // Add onload event to scroll when image finishes loading
+            contentHtml += `<img src="${image}" onload="scrollToBottom()" style="max-height: 200px; border-radius: 8px; display: block; margin-bottom: 10px;">`;
+        }
+
+        // Handle Text
+        if (role === 'ai') {
+            contentHtml += marked.parse(text) + (isStreaming ? '<span class="cursor"></span>' : '');
+        } else {
+            // Escape HTML for user input to prevent XSS
+            const safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            contentHtml += safeText.replace(/\n/g, "<br>");
+        }
+
+        bubble.innerHTML = contentHtml;
+        wrapper.appendChild(bubble);
+        container.appendChild(wrapper);
+
+        scrollToBottom();
     }
 
-    // 2. Create New Message Wrapper
-    const wrapper = document.createElement('div');
-    wrapper.className = `message-wrapper ${role}`;
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'avatar';
-    avatar.innerHTML = role === 'ai' ? '<span class="material-icons-round" style="font-size:20px;">smart_toy</span>' : '';
-    if(role === 'ai') wrapper.appendChild(avatar);
-
-    const bubble = document.createElement('div');
-    bubble.className = `message ${role}`;
-
-    let contentHtml = '';
-    
-    // Handle Image
-    if (image && role === 'user') {
-        // Add onload event to scroll when image finishes loading
-        contentHtml += `<img src="${image}" onload="scrollToBottom()" style="max-height: 200px; border-radius: 8px; display: block; margin-bottom: 10px;">`;
+    // Helper function for smooth scrolling
+    function scrollToBottom() {
+        const container = document.getElementById('chatContainer');
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
     }
-
-    // Handle Text
-    if (role === 'ai') {
-        contentHtml += marked.parse(text) + (isStreaming ? '<span class="cursor"></span>' : '');
-    } else {
-        // Escape HTML for user input to prevent XSS
-        const safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        contentHtml += safeText.replace(/\n/g, "<br>");
-    }
-
-    bubble.innerHTML = contentHtml;
-    wrapper.appendChild(bubble);
-    container.appendChild(wrapper);
-
-    scrollToBottom();
-}
-
-// Helper function for smooth scrolling
-function scrollToBottom() {
-    const container = document.getElementById('chatContainer');
-    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-}
-
 
     // --- Logic ---
-    
-            async function sendMessage() {
+    async function sendMessage() {
         const text = userInput.value.trim();
         const sendBtn = document.getElementById('sendBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -580,7 +581,9 @@ function scrollToBottom() {
                 chat.title = text.slice(0, 30);
                 renderSidebar();
             }
-            localStorage.setItem('chats', JSON.stringify(chats));
+            try {
+                localStorage.setItem('chats', JSON.stringify(chats));
+            } catch (e) { console.error("Storage full"); }
         }
 
         userInput.value = '';
@@ -603,14 +606,8 @@ function scrollToBottom() {
             model = localStorage.getItem('cfg_hf_model');
         }
 
-        // 2. FALLBACK LOGIC: If Image + Groq -> Switch to Hugging Face Vision
-        if (provider === 'groq' && tempImage) {
-            console.log("Image detected: Switching to Hugging Face Vision Fallback");
-            provider = 'hf'; // Force switch
-            apiKey = localStorage.getItem('cfg_hf_key'); // Switch key
-            // Use a capable Vision model (Llama 3.2 Vision is excellent and often free on HF)
-            model = "meta-llama/Llama-3.2-11B-Vision-Instruct"; 
-        }
+        // FIX: Removed the fallback logic here that forced switching to HF. 
+        // streamGroq now handles images natively.
 
         if (!apiKey) {
             appendMessageToUI('ai', `**Error:** Missing API Key for ${provider === 'groq' ? 'Groq' : 'Hugging Face'}.`);
@@ -637,7 +634,9 @@ function scrollToBottom() {
 
             if (chat) {
                 chat.messages.push({ role: 'ai', text: aiResponseText });
-                localStorage.setItem('chats', JSON.stringify(chats));
+                try {
+                    localStorage.setItem('chats', JSON.stringify(chats));
+                } catch(e) {}
             }
 
         } catch (err) {
@@ -650,15 +649,13 @@ function scrollToBottom() {
         } finally {
             endStreamingState();
         }
-                }
+    }
     
 
     // --- APIs ---
 
     async function streamGroq(key, model, sys, prompt, imageUrl, onChunk) {
-        // --- FIX: Auto-switch to Vision Model ---
-        // If an image is attached but the user is on a text-only model (like llama-3.3),
-        // we must switch to a vision model to prevent the "content must be a string" error.
+        // FIX: Auto-switch to Vision Model if image present
         let targetModel = model;
         if (imageUrl && !model.includes('vision')) {
             targetModel = 'llama-3.2-11b-vision-preview'; // Fallback to a free vision model
@@ -693,20 +690,29 @@ function scrollToBottom() {
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
+            let buffer = ""; // FIX: Add buffer for incomplete chunks
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split("\n");
                 
+                // Append new chunk to buffer
+                buffer += decoder.decode(value, { stream: true });
+                
+                // Split by lines, but keep the last segment in buffer
+                const lines = buffer.split("\n");
+                buffer = lines.pop(); 
+
                 for (const line of lines) {
-                    if (line.startsWith("data: ") && line !== "data: [DONE]") {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
                         try {
-                            const json = JSON.parse(line.substring(6));
+                            const json = JSON.parse(trimmed.substring(6));
                             const content = json.choices[0]?.delta?.content || "";
                             if (content) onChunk(content);
-                        } catch (e) { console.error("Parse error", e); }
+                        } catch (e) { 
+                            // Ignore incomplete JSON parses in stream
+                        }
                     }
                 }
             }
@@ -722,10 +728,7 @@ function scrollToBottom() {
 
         if (imageUrl) {
             // Vision Payload
-            // If the user didn't type a prompt, default to "Describe this image"
-            // to prevent empty input errors from HF.
             const finalPrompt = prompt || "Describe this image";
-            
             payload = {
                 inputs: finalPrompt, 
                 image: imageUrl, 
@@ -762,8 +765,10 @@ function scrollToBottom() {
 
     // --- File Handling ---
     function handleFile() {
-        const f = document.getElementById('fileInput').files[0];
+        const fileInput = document.getElementById('fileInput');
+        const f = fileInput.files[0];
         if(!f) return;
+        
         const reader = new FileReader();
         const isImg = f.type.startsWith('image/');
         
@@ -772,9 +777,12 @@ function scrollToBottom() {
             document.getElementById('filePreview').style.display = 'flex';
             document.getElementById('fileName').innerText = f.name;
             document.getElementById('previewIcon').innerText = isImg ? '🖼️' : '📄';
+            // FIX: Reset input so the same file can be selected again
+            fileInput.value = '';
         };
         isImg ? reader.readAsDataURL(f) : reader.readAsText(f);
     }
+
     function clearFile() {
         document.getElementById('fileInput').value = '';
         document.getElementById('filePreview').style.display = 'none';
@@ -793,6 +801,7 @@ function scrollToBottom() {
         document.getElementById('currentModelDisplay').innerText = 
             document.getElementById('primaryProvider').value === 'groq' ? 'Groq' : 'HF';
     }
+
     // --- Helper Functions ---
     function stopGeneration() {
         if (abortController) abortController.abort();
@@ -815,16 +824,17 @@ function scrollToBottom() {
         
         if(chats.length > 0) renderSidebar(); else startNewChat();
     })();
+
     // Close sidebar when clicking on the main content overlay (Mobile)
-document.querySelector('.main-content').addEventListener('click', (e) => {
-    const sidebar = document.getElementById('sidebar');
-    // If screen is mobile AND sidebar is open AND click is NOT on the menu toggle button
-    if (window.innerWidth < 768 && 
-        sidebar.classList.contains('open') && 
-        !e.target.closest('.menu-toggle')) {
-        toggleSidebar();
-    }
-});
+    document.querySelector('.main-content').addEventListener('click', (e) => {
+        const sidebar = document.getElementById('sidebar');
+        // If screen is mobile AND sidebar is open AND click is NOT on the menu toggle button
+        if (window.innerWidth < 768 && 
+            sidebar.classList.contains('open') && 
+            !e.target.closest('.menu-toggle')) {
+            toggleSidebar();
+        }
+    });
     
 </script>
 
