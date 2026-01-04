@@ -3,338 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-    <meta name="theme-color" content="#09090b">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>ai</title>
-    
+    <meta name="theme-color" content="#000000">
+    <title>Ultimate AI: Standalone</title>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
 
     <style>
         :root {
-            --bg: #09090b;
-            --surface: #18181b;
-            --border: #27272a;
-            --accent: #10b981;
-            --text-main: #f4f4f5;
-            --font-stack: -apple-system, BlinkMacSystemFont, "Inter", Roboto, sans-serif;
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --bg: #000000;
+            --surface: #1c1c1e;
+            --blue: #0a84ff;
+            --text: #ffffff;
+            --dim: #8e8e93;
+            --border: #38383a;
         }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: var(--font-stack);
-            margin: 0;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* --- HEADER --- */
+        /* HEADER */
         header {
-            height: 60px;
-            padding: 0 16px;
-            background: rgba(9, 9, 11, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 50;
-            flex-shrink: 0;
+            height: 55px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+            background: rgba(28, 28, 30, 0.8); backdrop-filter: blur(20px); z-index: 10;
         }
+        .title { font-weight: 700; font-size: 16px; letter-spacing: -0.5px; }
+        .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; }
 
-        .brand { font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 8px; }
-        .status-badge { font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .trash-btn { font-size: 16px; opacity: 0.6; padding: 8px; cursor: pointer; }
-
-        /* --- PULL REFRESH --- */
-        #ptr {
-            position: absolute; top: 60px; left: 0; right: 0; height: 60px;
-            display: flex; align-items: center; justify-content: center;
-            pointer-events: none; z-index: 40; opacity: 0; transition: opacity 0.2s;
-        }
-        .ptr-icon {
-            width: 24px; height: 24px; border: 2px solid var(--border);
-            border-top-color: var(--accent); border-radius: 50%; transition: transform 0.1s;
-        }
-        #ptr.loading .ptr-icon { animation: spin 0.8s linear infinite; border-color: var(--border); border-top-color: var(--accent); }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* --- FEED --- */
-        #feed {
-            flex: 1;
-            overflow-y: scroll;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            scroll-behavior: smooth;
-            overscroll-behavior-y: contain;
-            background: transparent;
-            z-index: 45;
-        }
-
-        .msg-row { display: flex; width: 100%; animation: fadeUp 0.3s ease; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* CHAT AREA */
+        #feed { flex: 1; overflow-y: auto; padding: 20px 15px; display: flex; flex-direction: column; gap: 15px; }
         
-        .u-row { justify-content: flex-end; }
-        .a-row { justify-content: flex-start; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; word-wrap: break-word; }
+        .user { align-self: flex-end; background: var(--blue); color: white; border-bottom-right-radius: 4px; }
+        .ai { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        
+        /* Markdown Styles */
+        .ai pre { background: #111; padding: 10px; border-radius: 8px; overflow-x: scroll; border: 1px solid #333; }
+        .ai code { font-family: monospace; font-size: 13px; }
+        .ai p { margin: 0 0 8px 0; } .ai p:last-child { margin: 0; }
 
-        .msg { max-width: 88%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.2); word-wrap: break-word; }
-        .u-msg { background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
-        .a-msg { background: var(--surface); color: #ececec; border-bottom-left-radius: 4px; border: 1px solid var(--border); }
-
-        .msg pre { background: #0d0d0d; padding: 12px; border-radius: 10px; overflow-x: auto; margin: 10px 0; border: 1px solid #333; position: relative; }
-        .copy-btn { position: absolute; top: 5px; right: 5px; background: #333; border: none; color: #ccc; font-size: 10px; padding: 4px 8px; border-radius: 4px; }
-
-        /* --- INPUT --- */
-        .input-container {
-            background: var(--bg);
-            border-top: 1px solid var(--border);
-            padding: 10px 16px;
-            padding-bottom: calc(10px + var(--safe-bottom));
-            display: flex; align-items: flex-end; gap: 10px; z-index: 50; flex-shrink: 0;
+        /* INPUT AREA */
+        .input-box {
+            padding: 10px 16px; border-top: 1px solid var(--border); background: var(--bg);
+            display: flex; gap: 10px; align-items: flex-end; padding-bottom: calc(10px + env(safe-area-inset-bottom));
         }
-
         textarea {
-            flex: 1; background: var(--surface); border: 1px solid var(--border); color: #fff;
-            padding: 12px 16px; font-size: 16px; max-height: 120px; border-radius: 22px; resize: none; font-family: inherit;
+            flex: 1; background: var(--surface); border: 1px solid var(--border); color: white;
+            padding: 10px 14px; border-radius: 20px; font-size: 16px; resize: none; max-height: 100px; font-family: inherit;
         }
-        
         #send-btn {
-            width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #000;
-            border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
-            transition: 0.2s;
+            background: var(--blue); border: none; width: 40px; height: 40px; border-radius: 50%;
+            color: white; font-weight: bold; display: flex; align-items: center; justify-content: center;
         }
-        #send-btn:active { transform: scale(0.9); background: var(--accent); }
-        
-        .art-result { width: 100%; border-radius: 12px; margin-top: 5px; border: 1px solid #333; }
+
+        /* SETTINGS MODAL */
+        #modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: #1c1c1e; width: 90%; max-width: 400px; padding: 20px; border-radius: 16px; border: 1px solid #444;
+        }
+        .modal-content h2 { margin-top: 0; font-size: 18px; }
+        .field { margin-bottom: 15px; }
+        .field label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+        .field input { width: 100%; padding: 10px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box;}
+        .save-btn { width: 100%; padding: 12px; background: var(--blue); border: none; color: white; border-radius: 8px; font-weight: bold; font-size: 16px; }
+        .close-btn { width: 100%; padding: 10px; background: transparent; border: none; color: #888; margin-top: 10px; }
+
+        .img-result { width: 100%; border-radius: 12px; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <span style="color:var(--accent)">●</span> Ultimate AI
+    <div id="modal">
+        <div class="modal-content">
+            <h2>⚙️ API Settings</h2>
+            <div class="field">
+                <label>GROQ API KEY (Recommended)</label>
+                <input type="password" id="key-groq" placeholder="gsk_...">
+            </div>
+            <div class="field">
+                <label>GEMINI API KEY</label>
+                <input type="password" id="key-gemini" placeholder="AIza...">
+            </div>
+            <div class="field">
+                <label>HUGGINGFACE KEY (For Art)</label>
+                <input type="password" id="key-hf" placeholder="hf_...">
+            </div>
+            <button class="save-btn" onclick="saveKeys()">Save & Connect</button>
+            <button class="close-btn" onclick="toggleModal(false)">Close</button>
         </div>
-        <div id="status-badge" class="status-badge">READY</div>
-        <div class="trash-btn" onclick="clearChat()">🗑️</div>
-    </header>
+    </div>
 
-    <div id="ptr"><div class="ptr-icon"></div></div>
+    <header>
+        <div class="title">Ultimate AI</div>
+        <div style="display:flex; gap:10px">
+            <button class="btn-icon" onclick="clearChat()">🗑️</button>
+            <button class="btn-icon" onclick="toggleModal(true)">⚙️</button>
+        </div>
+    </header>
 
     <div id="feed">
         </div>
 
-    <div class="input-container">
-        <textarea id="inp" rows="1" placeholder="Message..."></textarea>
-        <button id="send-btn">➤</button>
+    <div class="input-box">
+        <textarea id="inp" rows="1" placeholder="Type a message..."></textarea>
+        <button id="send-btn" onclick="handleSend()">➤</button>
     </div>
 
-    <script src="env.js"></script>
-
     <script>
+        // --- 1. SETUP ---
         const dom = {
-            inp: document.getElementById('inp'),
             feed: document.getElementById('feed'),
-            ptr: document.getElementById('ptr'),
-            badge: document.getElementById('status-badge')
+            inp: document.getElementById('inp'),
+            modal: document.getElementById('modal'),
+            inputs: {
+                groq: document.getElementById('key-groq'),
+                gemini: document.getElementById('key-gemini'),
+                hf: document.getElementById('key-hf')
+            }
         };
 
-        let KEYS = { GROQ: "", GEMINI: "", HF: "" };
-        let chatHistory = [];
+        let keys = { groq: '', gemini: '', hf: '' };
+        let history = [];
 
-        // --- 1. STARTUP & LOAD MEMORY ---
+        // --- 2. INITIALIZATION ---
         window.onload = () => {
-            if(typeof CONFIG !== 'undefined') KEYS = CONFIG;
-
-            // Load saved chat
-            const saved = localStorage.getItem('ultimate_history_v2');
-            if (saved) {
-                chatHistory = JSON.parse(saved);
-                if(chatHistory.length === 0) showWelcome();
-                else chatHistory.forEach(m => renderMessage(m.content, m.role === 'user' ? 'user' : 'ai', false));
+            // Load Keys from Phone Storage
+            const savedKeys = localStorage.getItem('ai_keys');
+            if (savedKeys) {
+                keys = JSON.parse(savedKeys);
+                dom.inputs.groq.value = keys.groq || '';
+                dom.inputs.gemini.value = keys.gemini || '';
+                dom.inputs.hf.value = keys.hf || '';
             } else {
-                showWelcome();
+                // If no keys, show modal immediately
+                toggleModal(true);
             }
-            scrollToBottom();
+
+            // Load Chat History
+            const savedChat = localStorage.getItem('ai_chat_v3');
+            if (savedChat) {
+                history = JSON.parse(savedChat);
+                history.forEach(msg => renderMessage(msg.content, msg.role, false));
+            } else {
+                renderMessage("Welcome. Click ⚙️ to set your API keys.", "ai");
+            }
         };
 
-        function showWelcome() {
-            renderMessage("<strong>System Online.</strong><br>I am ready. I will remember this conversation.", 'ai', false);
+        // --- 3. KEY MANAGEMENT ---
+        function toggleModal(show) {
+            dom.modal.style.display = show ? 'flex' : 'none';
         }
 
-        function saveChat() {
-            localStorage.setItem('ultimate_history_v2', JSON.stringify(chatHistory));
+        function saveKeys() {
+            keys = {
+                groq: dom.inputs.groq.value.trim(),
+                gemini: dom.inputs.gemini.value.trim(),
+                hf: dom.inputs.hf.value.trim()
+            };
+            localStorage.setItem('ai_keys', JSON.stringify(keys));
+            toggleModal(false);
+            renderMessage("✅ Keys saved locally.", "ai");
         }
 
-        function clearChat() {
-            if(confirm("Delete conversation history?")) {
-                chatHistory = [];
-                localStorage.removeItem('ultimate_history_v2');
-                dom.feed.innerHTML = '';
-                showWelcome();
-            }
-        }
-
-        // --- 2. INPUT HANDLERS ---
-        dom.inp.addEventListener('input', function() {
-            this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
-
-        dom.inp.addEventListener('keydown', (e) => {
-            if(e.key==="Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-        });
-        
-        // CLICK LISTENER - NO DISABLE LOGIC
-        document.getElementById('send-btn').addEventListener('click', handleSend);
-
-        // --- 3. SEND LOGIC ---
+        // --- 4. MESSAGING LOGIC ---
         async function handleSend() {
             const text = dom.inp.value.trim();
-            if(!text) return; // Only stop if empty
-            
-            // 1. Show User Message
-            renderMessage(text, 'user', true);
-            chatHistory.push({role: "user", content: text});
-            saveChat();
-            
-            dom.inp.value = ''; dom.inp.style.height = 'auto';
-            dom.inp.focus();
+            if (!text) return;
 
-            // 2. Route Request
-            if(/^(draw|paint|image|generate|lukis)\s/i.test(text)) {
-                // Art Mode
-                if(!KEYS.HF) return renderError("Missing HF Key in env.js");
-                setStatus("PAINTING...", "#d946ef");
-                await generateArt(text);
-            } else {
-                // Chat Mode
-                if(!KEYS.GROQ && !KEYS.GEMINI) return renderError("Missing API Keys in env.js");
-                
-                setStatus("THINKING...", "#fbbf24");
-                const loader = addLoader();
-
-                let response = KEYS.GROQ ? await callGroq() : null;
-                // Fallback
-                if(!response && KEYS.GEMINI) response = await callGemini();
-
-                removeLoader(loader);
-                
-                if(response) {
-                    renderMessage(response, 'ai', true);
-                    chatHistory.push({role: "assistant", content: response});
-                    saveChat();
-                } else {
-                    renderError("Connection failed or keys invalid.");
-                }
+            // Check if user has ANY keys
+            if (!keys.groq && !keys.gemini) {
+                alert("Please enter an API Key in Settings ⚙️");
+                toggleModal(true);
+                return;
             }
-            setStatus("READY", "#10b981");
+
+            // UI Updates
+            dom.inp.value = '';
+            dom.inp.style.height = 'auto';
+            renderMessage(text, 'user');
+            history.push({ role: 'user', content: text });
+            saveChat();
+
+            // Check for Art Generation
+            if (/^(draw|paint|image)/i.test(text)) {
+                if (!keys.hf) { renderMessage("⚠️ Need HuggingFace key for art.", "ai"); return; }
+                renderMessage("🎨 Painting...", "ai", true); // Temporary loading msg
+                await generateArt(text);
+                return;
+            }
+
+            // Text Generation
+            const loaderId = showLoader();
+            
+            let response = null;
+            let usedEngine = "None";
+
+            // Try Groq First
+            if (keys.groq) {
+                try {
+                    response = await callGroq();
+                    usedEngine = "Groq";
+                } catch (e) { console.error("Groq Failed", e); }
+            }
+
+            // Try Gemini Backup
+            if (!response && keys.gemini) {
+                try {
+                    response = await callGemini();
+                    usedEngine = "Gemini";
+                } catch (e) { console.error("Gemini Failed", e); }
+            }
+
+            removeLoader(loaderId);
+
+            if (response) {
+                renderMessage(response, 'ai');
+                history.push({ role: 'assistant', content: response });
+                saveChat();
+            } else {
+                renderMessage(`⚠️ Error: Could not connect to ${usedEngine}. Check your keys.`, "ai");
+            }
         }
 
-        // --- 4. API FUNCTIONS ---
+        // --- 5. API CALLS ---
         async function callGroq() {
-            try {
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST", headers: {"Authorization": `Bearer ${KEYS.GROQ}`, "Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile", 
-                        messages: [{role:"system", content:"You are a helpful AI assistant."}, ...chatHistory],
-                        temperature: 0.7
-                    })
-                });
-                const data = await res.json();
-                return data.choices?.[0]?.message?.content || null;
-            } catch(e) { return null; }
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${keys.groq}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [{role: "system", content: "You are helpful."}, ...history]
+                })
+            });
+            if (!res.ok) throw new Error("Groq Error " + res.status);
+            const data = await res.json();
+            return data.choices[0].message.content;
         }
 
         async function callGemini() {
-            try {
-                const parts = chatHistory.map(m => ({role: m.role==="user"?"user":"model", parts:[{text: m.content}]}));
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEYS.GEMINI}`, {
-                    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({contents: parts})
-                });
-                const data = await res.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-            } catch(e) { return null; }
+            // Format for Gemini
+            const parts = history.map(m => ({
+                role: m.role === 'user' ? 'user' : 'model',
+                parts: [{ text: m.content }]
+            }));
+            
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keys.gemini}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: parts })
+            });
+            if (!res.ok) throw new Error("Gemini Error " + res.status);
+            const data = await res.json();
+            return data.candidates[0].content.parts[0].text;
         }
 
-        async function generateArt(p) {
+        async function generateArt(prompt) {
             try {
                 const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
-                    method: "POST", headers: {Authorization: `Bearer ${KEYS.HF}`, "Content-Type": "application/json"},
-                    body: JSON.stringify({inputs: p.replace(/^draw\s/i, '')})
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${keys.hf}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ inputs: prompt.replace(/^(draw|paint|image)\s/i, '') })
                 });
-                if(!res.ok) throw new Error();
-                const url = URL.createObjectURL(await res.blob());
+                if(!res.ok) throw new Error("Art Error");
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
                 
-                const d = document.createElement('div');
-                d.className = "msg-row a-row";
-                d.innerHTML = `<div class="msg a-msg"><img src="${url}" class="art-result"></div>`;
-                dom.feed.appendChild(d);
+                // Remove the "Painting..." text
+                dom.feed.lastChild.remove();
+                
+                const div = document.createElement('div');
+                div.className = "msg ai";
+                div.innerHTML = `<img src="${url}" class="img-result">`;
+                dom.feed.appendChild(div);
                 scrollToBottom();
-            } catch(e) { renderError("Art generation failed."); }
+            } catch (e) {
+                dom.feed.lastChild.innerHTML = "⚠️ Art generation failed.";
+            }
         }
 
-        // --- 5. UI HELPERS ---
-        function renderMessage(txt, sender, animate) {
-            const d = document.createElement('div');
-            d.className = `msg-row ${sender==='user'?'u-row':'a-row'}`;
-            if(!animate) d.style.animation = 'none';
-            
-            d.innerHTML = `<div class="msg ${sender==='user'?'u-msg':'a-msg'}">${sender==='ai'?marked.parse(txt):txt}</div>`;
-            dom.feed.appendChild(d);
-            
-            if(sender === 'ai') {
-                d.querySelectorAll('pre').forEach(p => {
-                    const b = document.createElement('button');
-                    b.className = 'copy-btn'; b.innerText = 'Copy';
-                    b.onclick = () => { navigator.clipboard.writeText(p.innerText); b.innerText = 'Copied!'; setTimeout(()=>b.innerText='Copy',1000); };
-                    p.appendChild(b);
+        // --- 6. UI HELPERS ---
+        function renderMessage(text, role, isTemp = false) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            if (role === 'ai' && !isTemp) {
+                div.innerHTML = marked.parse(text);
+                // Highlight Code
+                div.querySelectorAll('pre code').forEach((el) => {
+                    hljs.highlightElement(el);
                 });
+            } else {
+                div.innerText = text;
             }
+            dom.feed.appendChild(div);
             scrollToBottom();
+            return div;
         }
 
-        function renderError(msg) {
-            renderMessage(`⚠️ ${msg}`, 'ai', true);
-        }
-
-        function addLoader() {
-            const id = "l-" + Date.now();
-            dom.feed.insertAdjacentHTML('beforeend', `<div id="${id}" class="msg-row a-row"><div class="msg a-msg">...</div></div>`);
+        function showLoader() {
+            const div = document.createElement('div');
+            div.className = "msg ai";
+            div.innerText = "...";
+            div.id = "loader";
+            dom.feed.appendChild(div);
             scrollToBottom();
-            return id;
+            return "loader";
         }
-        function removeLoader(id) { document.getElementById(id)?.remove(); }
-        function setStatus(t, c) { dom.badge.innerText=t; dom.badge.style.color=c; dom.badge.style.borderColor=c; }
-        function scrollToBottom() { dom.feed.scrollTop = dom.feed.scrollHeight; }
 
-        // --- 6. PULL REFRESH ---
-        let touchStart = 0, ptrActive = false;
-        dom.feed.addEventListener('touchstart', (e) => { if(dom.feed.scrollTop===0) { touchStart=e.touches[0].clientY; ptrActive=true; } }, {passive:true});
-        dom.feed.addEventListener('touchmove', (e) => {
-            if(!ptrActive || dom.feed.scrollTop>0) return;
-            const pull = e.touches[0].clientY - touchStart;
-            if(pull>0) {
-                dom.ptr.style.opacity = '1';
-                dom.ptr.querySelector('.ptr-icon').style.transform = `rotate(${Math.min(pull,360)}deg)`;
-                if(pull>80) dom.ptr.querySelector('.ptr-icon').style.borderColor='#10b981';
+        function removeLoader(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function saveChat() {
+            localStorage.setItem('ai_chat_v3', JSON.stringify(history));
+        }
+
+        function clearChat() {
+            if (confirm("Clear History?")) {
+                history = [];
+                localStorage.removeItem('ai_chat_v3');
+                dom.feed.innerHTML = '';
             }
-        }, {passive:true});
-        dom.feed.addEventListener('touchend', (e) => {
-            if(ptrActive && e.changedTouches[0].clientY-touchStart>80 && dom.feed.scrollTop===0) {
-                dom.ptr.classList.add('loading');
-                setTimeout(()=>window.location.reload(), 500);
-            } else { dom.ptr.style.opacity='0'; dom.ptr.querySelector('.ptr-icon').style.borderColor='#27272a'; }
-            ptrActive=false;
+        }
+
+        function scrollToBottom() {
+            dom.feed.scrollTop = dom.feed.scrollHeight;
+        }
+
+        // Input Resize
+        dom.inp.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
     </script>
 </body>
