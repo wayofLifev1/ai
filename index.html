@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#141414">
     <title>Ai</title>
-    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+        /* --- CSS STYLES --- */
         :root { --bg: #000; --panel: #111; --accent: #00ff88; --text: #fff; }
         body { background-color: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
@@ -36,7 +35,9 @@
     </header>
 
     <div id="feed">
-        <div class="msg a-msg"><p>Halo. Saya Ai.</p></div>
+        <div class="msg a-msg">
+            <p>Halo. Saya Ai.</p>
+        </div>
     </div>
 
     <div class="input-area">
@@ -47,16 +48,18 @@
     <script src="env.js"></script> 
 
     <script>
-        // --- PWA INSTALLER ---
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log("App Ready to Install"));
+        // Check if env.js loaded correctly
+        if (typeof CONFIG === 'undefined') {
+            alert("Error: Could not load env.js! Make sure the file exists.");
         }
 
-        // --- MAIN LOGIC ---
-        if (typeof CONFIG === 'undefined') alert("Error: env.js missing!");
-        
-        const KEYS = { GROQ: CONFIG.GROQ, HF: CONFIG.HF, GEMINI: CONFIG.GEMINI };
+        // Link the keys from CONFIG
+        const KEYS = {
+            GROQ: CONFIG.GROQ,
+            HF: CONFIG.HF,
+            GEMINI: CONFIG.GEMINI
+        };
+
         const inp = document.getElementById('inp');
         const btn = document.getElementById('btn');
         const feed = document.getElementById('feed');
@@ -68,17 +71,19 @@
         async function handleSend() {
             const text = inp.value.trim();
             if (!text) return; 
+
             addMsg(text, 'u-msg');
             inp.value = '';
             
-            const isArt = ["draw", "paint", "lukis"].some(k => text.toLowerCase().startsWith(k));
+            const isArt = ["draw", "paint", "lukis", "gambar"].some(k => text.toLowerCase().startsWith(k));
 
             if (isArt) {
                 updateStatus("PAINTING...", "#d946ef");
                 await generateArt(text);
             } else {
                 updateStatus("THINKING...", "#00ff88");
-                if (!(await tryGroq(text))) {
+                const success = await tryGroq(text);
+                if (!success) {
                     updateStatus("SWITCHING...", "#f59e0b");
                     await tryGemini(text);
                 }
@@ -86,19 +91,25 @@
             updateStatus("ONLINE", "#333");
         }
 
+        // --- ENGINE 1: GROQ ---
         async function tryGroq(prompt) {
             try {
                 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${KEYS.GROQ}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{role: "user", content: prompt}] })
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [{role: "user", content: prompt}]
+                    })
                 });
+                if(!res.ok) throw new Error("Groq Error");
                 const data = await res.json();
                 addMsg(marked.parse(data.choices[0].message.content), 'a-msg', true);
                 return true;
             } catch (e) { return false; }
         }
 
+        // --- ENGINE 2: GEMINI ---
         async function tryGemini(prompt) {
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEYS.GEMINI}`, {
@@ -107,10 +118,12 @@
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 const data = await res.json();
-                addMsg(marked.parse(data.candidates[0].content.parts[0].text), 'a-msg', true);
-            } catch (e) { addMsg("⚠️ Offline.", 'a-msg'); }
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error.";
+                addMsg(marked.parse(reply), 'a-msg', true);
+            } catch (e) { addMsg("⚠️ System Offline.", 'a-msg'); }
         }
 
+        // --- ENGINE 3: ART ---
         async function generateArt(prompt) {
             try {
                 const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev", {
@@ -122,7 +135,8 @@
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
                 feed.innerHTML += `<div class="msg a-msg" style="border:none"><img src="${url}" class="art-img" onload="this.scrollIntoView()"></div>`;
-            } catch (e) { addMsg("⚠️ Art busy.", 'a-msg'); }
+                feed.scrollTop = feed.scrollHeight;
+            } catch (e) { addMsg("⚠️ Art server busy.", 'a-msg'); }
         }
 
         function addMsg(text, type, isHtml) {
