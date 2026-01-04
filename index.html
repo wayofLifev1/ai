@@ -344,7 +344,7 @@
         </div>
         <div class="setting-row">
             <label>Model Name</label>
-            <input type="text" id="groqModel" value="llama-3.1-70b-versatile">
+            <input type="text" id="groqModel" value="llama-3.3-70b-versatile">
         </div>
 
         <div class="section-title">Hugging Face Settings</div>
@@ -749,7 +749,7 @@ function scrollToBottom() {
         document.getElementById('primaryProvider').value = localStorage.getItem('cfg_provider') || 'groq';
         document.getElementById('sysPrompt').value = localStorage.getItem('cfg_sys') || '';
         document.getElementById('groqKey').value = localStorage.getItem('cfg_groq_key') || '';
-        document.getElementById('groqModel').value = localStorage.getItem('cfg_groq_model') || 'llama-3.1-70b-versatile';
+        document.getElementById('groqModel').value = localStorage.getItem('cfg_groq_model') || 'llama-3.3-70b-versatile';
         document.getElementById('hfKey').value = localStorage.getItem('cfg_hf_key') || '';
         document.getElementById('hfModel').value = localStorage.getItem('cfg_hf_model') || 'mistralai/Mixtral-8x7B-Instruct-v0.1';
         
