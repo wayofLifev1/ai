@@ -233,17 +233,27 @@
         .section-title { font-size: 0.8rem; font-weight: 700; color: var(--primary); margin-top: 15px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 24px; cursor: pointer; font-weight: 500; font-size: 1rem; margin-top: 15px; }
+/* Add this anywhere in your <style> tag */
+.mobile-close { display: flex; }
 
+@media (min-width: 768px) {
+    .mobile-close { display: none !important; }
+}
+        
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="sidebar-header">
-        <button class="new-chat-btn" onclick="startNewChat()">
-            <span class="material-icons-round">add</span> New Chat
-        </button>
-    </div>
+    <div class="sidebar-header" style="display:flex; align-items:center; gap: 8px;">
+    <button class="new-chat-btn" onclick="startNewChat()" style="flex: 1;">
+        <span class="material-icons-round">add</span> New Chat
+    </button>
+    <button class="icon-btn mobile-close" onclick="toggleSidebar()" style="background: #dde3ea; border-radius: 50%; width: 40px; height: 40px;">
+        <span class="material-icons-round">chevron_left</span>
+    </button>
+</div>
+
     <div class="history-list" id="historyList"></div>
     <div style="padding: 20px; border-top: 1px solid #e3e3e3;">
         <button class="icon-btn" style="width: 100%; border-radius: 8px; justify-content: flex-start; gap: 10px;" onclick="toggleSettings()">
@@ -258,7 +268,7 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <span class="material-icons-round">menu</span>
             </button>
-            <span style="font-weight:500; font-size:1.2rem; color:#444746;">Gemini</span>
+            <span style="font-weight:500; font-size:1.2rem; color:#444746;">a.i</span>
         </div>
         <div class="model-pill" onclick="toggleSettings()">
             <span class="material-icons-round" style="font-size:16px;">smart_toy</span>
@@ -268,7 +278,7 @@
 
     <div id="chatContainer">
         <div style="text-align:center; margin-top:10vh; color:#444746;" id="emptyState">
-            <h1 style="font-weight: 400; font-size: 2.5rem; background: linear-gradient(90deg, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">Hello, Human</h1>
+            <h1 style="font-weight: 400; font-size: 2.5rem; background: linear-gradient(90deg, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">Assalamualaikum </h1>
             <p style="font-size: 1.2rem; color: #5f6368;">How can I help you today?</p>
         </div>
     </div>
@@ -715,6 +725,17 @@
         
         if(chats.length > 0) renderSidebar(); else startNewChat();
     })();
+    // Close sidebar when clicking on the main content overlay (Mobile)
+document.querySelector('.main-content').addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    // If screen is mobile AND sidebar is open AND click is NOT on the menu toggle button
+    if (window.innerWidth < 768 && 
+        sidebar.classList.contains('open') && 
+        !e.target.closest('.menu-toggle')) {
+        toggleSidebar();
+    }
+});
+    
 </script>
 
 </body>
