@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Pro Chat</title>
+    <title>Gemini</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --bg: #f8fafc;
-            --sidebar-bg: #0f172a;
-            --text-main: #334155;
-            --user-bubble: #2563eb;
-            --ai-bubble: #ffffff;
-            --border: #e2e8f0;
+            --bg-body: #ffffff;
+            --bg-sidebar: #f0f4f9;
+            --text-main: #1f1f1f;
+            --text-secondary: #5f6368;
+            --primary: #0b57d0; /* Gemini Blue */
+            --user-bubble: #e8f0fe;
+            --border-color: #e3e3e3;
+            --code-bg: #1e1e1e;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
+            font-family: "Google Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-body);
             margin: 0;
             display: flex;
             height: 100vh;
@@ -33,9 +34,8 @@
 
         /* --- SIDEBAR --- */
         #sidebar {
-            width: 260px;
-            background: var(--sidebar-bg);
-            color: #cbd5e1;
+            width: 280px;
+            background: var(--bg-sidebar);
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease;
@@ -43,162 +43,160 @@
             height: 100%;
             z-index: 20;
             transform: translateX(-100%);
-            border-right: 1px solid #1e293b;
+            border-right: 1px solid transparent;
         }
 
         @media (min-width: 768px) {
             #sidebar { position: relative; transform: translateX(0); }
-            .menu-toggle { display: none !important; }
         }
-        #sidebar.open { transform: translateX(0); }
+        #sidebar.open { transform: translateX(0); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
 
-        .sidebar-header { padding: 20px; border-bottom: 1px solid #1e293b; }
+        .sidebar-header { padding: 20px; }
         
         .new-chat-btn {
-            width: 100%; padding: 12px; background: var(--primary); color: white; border: none;
-            border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; 
-            justify-content: center; gap: 8px; transition: 0.2s;
+            width: 100%; padding: 10px 15px; 
+            background: #dde3ea; color: #444746; border: none;
+            border-radius: 24px; cursor: pointer; font-weight: 500; 
+            display: flex; align-items: center; gap: 10px; transition: 0.2s;
+            font-size: 0.9rem;
         }
-        .new-chat-btn:hover { background: var(--primary-dark); }
-
-        .history-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .new-chat-btn:hover { background: #d1d9e0; }
+        
+        .history-list { flex: 1; overflow-y: auto; padding: 10px 15px; }
         .history-item {
-            padding: 12px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; justify-content: space-between;
+            padding: 10px 15px; margin-bottom: 5px; border-radius: 20px; 
+            cursor: pointer; font-size: 0.9rem; color: var(--text-main);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .history-item:hover { background: #1e293b; color: white; }
-        .history-item.active { background: #334155; color: white; }
-        .delete-chat { display: none; color: #ef4444; }
-        .history-item:hover .delete-chat { display: block; }
+        .history-item:hover { background: #e0e5eb; }
+        .history-item.active { background: #c2e7ff; color: #001d35; font-weight: 500; }
+        
+        .delete-chat { 
+            visibility: hidden; color: #444746; font-size: 1rem; padding: 4px; 
+            border-radius: 50%;
+        }
+        .delete-chat:hover { background: #ffdad6; color: #b3261e; }
+        .history-item:hover .delete-chat { visibility: visible; }
 
         /* --- MAIN AREA --- */
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; }
+        
+        /* Sidebar Overlay for Mobile */
+        #sidebarOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3); z-index: 15; display: none;
+        }
+        #sidebar.open + #sidebarOverlay { display: block; }
+        @media (min-width: 768px) { #sidebarOverlay { display: none !important; } }
 
         header {
-            background: white; padding: 15px 20px; border-bottom: 1px solid var(--border);
+            padding: 15px 20px; 
             display: flex; justify-content: space-between; align-items: center;
         }
-        .menu-toggle { background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-right: 10px; }
+        .menu-toggle { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+        .brand-name { font-weight: 500; font-size: 1.3rem; color: #444746; letter-spacing: -0.5px; }
         
+        .model-pill {
+            font-size: 0.85rem; background: #f0f4f9; padding: 6px 12px; border-radius: 8px; 
+            color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap:5px;
+            transition: 0.2s;
+        }
+        .model-pill:hover { background: #e0e5eb; }
+
         /* CHAT CONTAINER */
         #chatContainer {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            scroll-behavior: smooth;
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 25px;
+            width: 100%; max-width: 800px; margin: 0 auto;
+            padding-bottom: 40px;
         }
 
         /* MESSAGES */
-        .message-wrapper {
-            display: flex;
-            width: 100%;
-        }
-        
+        .message-wrapper { display: flex; width: 100%; gap: 15px; }
         .message-wrapper.user { justify-content: flex-end; }
         .message-wrapper.ai { justify-content: flex-start; }
 
-        .message {
-            max-width: 85%;
-            padding: 15px 20px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            position: relative;
-            word-wrap: break-word; /* Prevents long text from breaking layout */
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        .avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
-
+        .ai .avatar { background: linear-gradient(135deg, #4285f4, #d96570); color: white; }
+        
+        .message { max-width: 90%; font-size: 1rem; line-height: 1.6; word-wrap: break-word; }
         .message.user {
-            background: var(--user-bubble);
-            color: white;
-            border-bottom-right-radius: 2px;
+            background: #f0f4f9; color: var(--text-main);
+            padding: 10px 18px; border-radius: 18px;
+            border-top-right-radius: 4px;
         }
+        .message.ai { background: transparent; color: var(--text-main); padding: 0; width: 100%; }
 
-        .message.ai {
-            background: var(--ai-bubble);
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 2px;
-            padding-bottom: 40px; /* Space for Copy button */
-        }
-
-        /* MARKDOWN STYLES (The "Proper" AI Look) */
+        /* MARKDOWN & CODE */
         .message.ai p { margin-top: 0; margin-bottom: 10px; }
-        .message.ai pre { 
-            background: #1e293b; color: #e2e8f0; padding: 15px; 
-            border-radius: 8px; overflow-x: auto; margin: 10px 0; 
+        .message.ai h1, .message.ai h2 { margin-top: 20px; font-weight: 500; }
+        
+        .code-block-wrapper { margin: 15px 0; border-radius: 8px; overflow: hidden; border: 1px solid #e3e3e3; }
+        .code-header {
+            background: #2d2d2d; color: #e0e0e0; padding: 8px 15px; font-size: 0.75rem;
+            display: flex; justify-content: space-between; align-items: center; font-family: sans-serif;
         }
-        .message.ai code { 
-            font-family: 'Consolas', 'Monaco', monospace; 
-            font-size: 0.85em; 
+        .code-header button {
+            background: transparent; border: none; color: #a0a0a0; cursor: pointer;
+            font-size: 0.75rem; display: flex; align-items: center; gap: 4px;
         }
-        /* Inline code */
-        .message.ai :not(pre) > code {
-            background: rgba(0,0,0,0.1);
-            padding: 2px 5px;
-            border-radius: 4px;
-            color: #d946ef; /* Pinkish for inline code */
-            font-weight: 600;
-        }
-        .message.ai ul, .message.ai ol { margin-left: 20px; padding: 0; }
-        .message.ai li { margin-bottom: 5px; }
-
-        /* Copy Button */
-        .copy-btn {
-            position: absolute; bottom: 8px; right: 10px;
-            background: transparent; border: 1px solid var(--border);
-            color: #64748b; padding: 4px 8px; border-radius: 6px;
-            font-size: 0.75rem; cursor: pointer; display: flex; gap: 4px;
-        }
-        .copy-btn:hover { background: #f1f5f9; color: var(--primary); }
+        .code-header button:hover { color: white; }
+        .message.ai pre { background: var(--code-bg); margin: 0; padding: 15px; overflow-x: auto; color: #fff; }
+        .message.ai code { font-family: 'Roboto Mono', monospace; font-size: 0.9em; }
+        .message.ai :not(pre) > code { background: #f0f4f9; padding: 2px 6px; border-radius: 4px; font-family: 'Roboto Mono', monospace; font-size: 0.9em; color: #1f1f1f; }
 
         /* INPUT AREA */
-        .input-area {
-            background: white; padding: 15px; border-top: 1px solid var(--border);
-            display: flex; flex-direction: column; gap: 10px;
+        .input-container { width: 100%; max-width: 800px; margin: 0 auto; padding: 20px; position: relative; }
+        .input-box {
+            background: #f0f4f9; border-radius: 28px; padding: 12px 15px; 
+            display: flex; flex-direction: column; transition: 0.2s;
         }
-        
-        .attachment-preview {
-            display: none; background: #f1f5f9; padding: 8px; border-radius: 6px;
-            font-size: 0.85rem; justify-content: space-between; align-items: center;
-            border: 1px solid var(--border); width: fit-content;
+        .input-box:focus-within { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        .file-preview {
+            display: none; padding: 8px 12px; margin-bottom: 8px;
+            background: white; border-radius: 8px; width: fit-content;
+            font-size: 0.85rem; border: 1px solid #e3e3e3; align-items: center; gap: 8px;
         }
 
-        .input-row { display: flex; gap: 10px; align-items: flex-end; }
-
+        .input-row { display: flex; align-items: flex-end; gap: 10px; }
         textarea {
-            flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px;
-            resize: none; height: 50px; font-family: inherit; font-size: 0.95rem;
-            line-height: 1.4;
+            flex: 1; background: transparent; border: none; padding: 10px 0;
+            resize: none; font-family: inherit; font-size: 1rem; max-height: 200px;
+            outline: none; line-height: 1.5; height: 24px;
         }
-        textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
-
         button.icon-btn {
-            height: 50px; width: 50px; border-radius: 10px; border: 1px solid var(--border);
-            background: white; cursor: pointer; display: flex; justify-content: center; align-items: center;
-            color: #64748b; font-size: 1.2rem;
+            background: none; border: none; cursor: pointer; color: #444746;
+            padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
         }
-        
-        button.send-btn {
-            height: 50px; width: 50px; border-radius: 10px; border: none;
-            background: var(--primary); color: white; cursor: pointer; font-size: 1.2rem;
-        }
-        button.send-btn:hover { background: var(--primary-dark); }
-        button.send-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+        button.icon-btn:hover { background: #e0e5eb; }
+        button.icon-btn.send { color: var(--text-secondary); transition: color 0.2s; }
+        button.icon-btn.send.active { color: var(--primary); }
+
+        .cursor::after { content: "●"; color: var(--primary); animation: blink 1s infinite; margin-left: 2px; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         /* SETTINGS MODAL */
         #settingsPanel {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100;
         }
-        .settings-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
-        .setting-row { margin-bottom: 15px; }
-        .setting-row label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
-        .setting-row input, .setting-row select, .setting-row textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .settings-box { 
+            background: white; padding: 25px; border-radius: 16px; 
+            width: 90%; max-width: 450px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+        }
+        .setting-row { margin-bottom: 20px; }
+        .setting-row label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; color: #444746; }
+        .setting-row input, .setting-row select, .setting-row textarea { 
+            width: 100%; padding: 12px; border: 1px solid #c4c7c5; border-radius: 8px; 
+            box-sizing: border-box; font-family: inherit;
+        }
+        .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 24px; cursor: pointer; font-weight: 500; font-size: 1rem; }
 
     </style>
 </head>
@@ -206,68 +204,88 @@
 
 <div id="sidebar">
     <div class="sidebar-header">
-        <button class="new-chat-btn" onclick="startNewChat()">+ New Chat</button>
+        <button class="new-chat-btn" onclick="startNewChat()">
+            <span class="material-icons-round">add</span> New Chat
+        </button>
     </div>
     <div class="history-list" id="historyList"></div>
+    <div style="padding: 20px; border-top: 1px solid #e3e3e3;">
+        <button class="icon-btn" style="width: 100%; border-radius: 8px; justify-content: flex-start; gap: 10px;" onclick="toggleSettings()">
+            <span class="material-icons-round">settings</span> Settings
+        </button>
+    </div>
 </div>
+<div id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <div class="main-content">
     <header>
-        <div style="display:flex; align-items:center;">
-            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            <span style="font-weight:700; font-size:1.1rem;">AI Pro</span>
+        <div style="display:flex; align-items:center; gap: 10px;">
+            <button class="menu-toggle" onclick="toggleSidebar()">
+                <span class="material-icons-round">menu</span>
+            </button>
+            <span class="brand-name">Gemini</span>
         </div>
-        <div>
-            <button class="icon-btn" style="height:36px; width:36px; font-size:1rem;" onclick="toggleSettings()">⚙️</button>
+        <div class="model-pill" onclick="toggleSettings()">
+            <span class="material-icons-round" style="font-size:16px;">smart_toy</span>
+            <span id="currentModelDisplay" style="margin-left: 5px;">Llama 3</span>
+            <span class="material-icons-round" style="font-size:16px; margin-left:5px;">arrow_drop_down</span>
         </div>
     </header>
 
     <div id="chatContainer">
-        <div style="text-align:center; margin-top:50px; color:#94a3b8;" id="emptyState">
-            <h3>Start a Conversation</h3>
-            <p>Use Enter for new line. Ctrl+Enter to send.</p>
+        <div style="text-align:center; margin-top:10vh; color:#444746;" id="emptyState">
+            <h1 style="font-weight: 500; font-size: 2.5rem; background: linear-gradient(90deg, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">Hello, Human</h1>
+            <p style="font-size: 1.2rem; color: #5f6368;">How can I help you today?</p>
         </div>
     </div>
 
-    <div class="input-area">
-        <input type="file" id="fileInput" hidden onchange="handleFile()">
-        <div class="attachment-preview" id="filePreview">
-            <span id="fileName">file.txt</span>
-            <span style="margin-left:10px; color:red; cursor:pointer;" onclick="clearFile()">✕</span>
-        </div>
+    <div class="input-container">
+        <div class="input-box">
+            <div class="file-preview" id="filePreview">
+                <span id="previewIcon">📄</span>
+                <span id="fileName" style="max-width: 150px; overflow:hidden; text-overflow:ellipsis;">file.txt</span>
+                <span class="material-icons-round" style="font-size:16px; cursor:pointer; color:#5f6368;" onclick="clearFile()">close</span>
+            </div>
 
-        <div class="input-row">
-            <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">📎</button>
-            <textarea id="userInput" placeholder="Type a message (Ctrl+Enter to send)..."></textarea>
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+            <div class="input-row">
+                <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">
+                    <span class="material-icons-round">add_circle_outline</span>
+                </button>
+                <textarea id="userInput" placeholder="Ask Gemini..." rows="1"></textarea>
+                <button class="icon-btn send" id="sendBtn" onclick="sendMessage()">
+                    <span class="material-icons-round">send</span>
+                </button>
+                <button class="icon-btn" id="stopBtn" onclick="stopGeneration()" style="display:none; color: #b3261e;">
+                    <span class="material-icons-round">stop_circle</span>
+                </button>
+            </div>
+        </div>
+        <div style="text-align: center; font-size: 0.75rem; color: #5f6368; margin-top: 12px;">
+            Gemini may display inaccurate info, including about people, so double-check its responses.
         </div>
     </div>
+    
+    <input type="file" id="fileInput" hidden onchange="handleFile()">
 </div>
 
 <div id="settingsPanel">
-    <div class="settings-box">
-        <h3 style="margin-top:0;">Configuration</h3>
+    <div class="settings-box" id="settingsContent">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="margin:0; font-size:1.2rem;">Settings</h2>
+            <button class="icon-btn" onclick="toggleSettings()"><span class="material-icons-round">close</span></button>
+        </div>
         
         <div class="setting-row">
-            <label>Primary Provider</label>
+            <label>API Provider</label>
             <select id="primaryProvider">
-                <option value="groq">Groq</option>
-                <option value="hf">Hugging Face</option>
+                <option value="groq">Groq (Fast)</option>
+                <option value="hf">Hugging Face (Free)</option>
             </select>
         </div>
 
-        <div class="setting-row" style="background:#f8fafc; padding:10px; border-radius:8px;">
-            <label style="color:#2563eb;">Groq API Key</label>
-            <input type="password" id="groqKey" placeholder="gsk_...">
-            <label style="margin-top:10px; color:#2563eb;">Groq Model</label>
-            <input type="text" id="groqModel" value="llama-3.1-8b-instant">
-        </div>
-
-        <div class="setting-row" style="background:#f8fafc; padding:10px; border-radius:8px;">
-            <label style="color:#d97706;">Hugging Face API Key</label>
-            <input type="password" id="hfKey" placeholder="hf_...">
-            <label style="margin-top:10px; color:#d97706;">HF Model</label>
-            <input type="text" id="hfModel" value="mistralai/Mixtral-8x7B-Instruct-v0.1">
+        <div class="setting-row">
+            <label>API Key</label>
+            <input type="password" id="groqKey" placeholder="Enter API Key...">
         </div>
 
         <div class="setting-row">
@@ -275,118 +293,84 @@
             <textarea id="sysPrompt" rows="3" placeholder="You are a helpful assistant..."></textarea>
         </div>
 
-        <button class="save-btn" onclick="saveSettings()">Save Configuration</button>
-        <button style="width:100%; margin-top:10px; background:none; border:none; cursor:pointer;" onclick="toggleSettings()">Cancel</button>
+        <button class="save-btn" onclick="saveSettings()">Save</button>
     </div>
 </div>
 
 <script>
-    // --- Markdown Configuration ---
+    // --- Markdown & UI Setup ---
     marked.setOptions({
-        breaks: true, // Converts standard newlines to <br>
-        highlight: function(code, lang) {
-            const language = highlight.getLanguage(lang) ? lang : 'plaintext';
-            return highlight.highlight(code, { language }).value;
-        }
+        breaks: true,
+        highlight: function(code) { return hljs.highlightAuto(code).value; }
     });
+    
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, language) {
+        const lang = language || 'text';
+        return `<div class="code-block-wrapper"><div class="code-header"><span>${lang}</span><button onclick="copyCode(this, \`${encodeURIComponent(code)}\`)"><span class="material-icons-round" style="font-size:14px;">content_copy</span> Copy</button></div><pre><code class="hljs ${lang}">${hljs.highlightAuto(code).value}</code></pre></div>`;
+    };
+    marked.use({ renderer });
 
-    // --- State ---
+    // --- Variables ---
     let chats = JSON.parse(localStorage.getItem('chats') || '[]');
     let currentChatId = null;
     let currentAttachment = null;
+    let abortController = null;
 
-    // --- 1. Message Rendering (The Fix for formatting & visibility) ---
-    function appendMessage(role, text, image = null, save = true) {
-        const container = document.getElementById('chatContainer');
-        const emptyState = document.getElementById('emptyState');
-        if(emptyState) emptyState.style.display = 'none';
-
-        // Create Wrapper
-        const wrapper = document.createElement('div');
-        wrapper.className = `message-wrapper ${role}`;
-
-        // Create Bubble
-        const bubble = document.createElement('div');
-        bubble.className = `message ${role}`;
-
-        // Content Processing
-        let htmlContent = "";
-        
-        // 1. Image handling
-        if (image && role === 'user') {
-            htmlContent += `<img src="${image}" style="max-height: 200px; display:block; margin-bottom:10px; border-radius:8px;">`;
-        }
-
-        // 2. Text handling (Markdown for AI, Simple for User)
-        if (role === 'ai') {
-            // Use MARKED.JS to parse markdown (Bold, Code, Lists)
-            htmlContent += marked.parse(text);
-        } else {
-            // User text: Simple escape to prevent HTML injection but keep lines
-            htmlContent += text.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
-        }
-
-        bubble.innerHTML = htmlContent;
-
-        // 3. Add Copy Button for AI
-        if (role === 'ai') {
-            const btn = document.createElement('button');
-            btn.className = 'copy-btn';
-            btn.innerHTML = `<span>Copy</span>`;
-            btn.onclick = () => {
-                navigator.clipboard.writeText(text);
-                btn.innerHTML = `<span>Copied!</span>`;
-                setTimeout(() => btn.innerHTML = `<span>Copy</span>`, 2000);
-            };
-            bubble.appendChild(btn);
-        }
-
-        wrapper.appendChild(bubble);
-        container.appendChild(wrapper);
-        
-        // Highlight code blocks
-        if(role === 'ai') hljs.highlightAll();
-
-        // Scroll to bottom
-        container.scrollTop = container.scrollHeight;
-
-        // Save to History logic
-        if (save && currentChatId) {
-            const chat = chats.find(c => c.id === currentChatId);
-            if (chat) {
-                chat.messages.push({ role, text, image });
-                if (chat.messages.length === 1 && role === 'user') {
-                    chat.title = text.slice(0, 30);
-                    renderSidebar();
-                }
-                localStorage.setItem('chats', JSON.stringify(chats));
-            }
-        }
-    }
-
-    // --- 2. Input Handling (The Fix for Enter key) ---
+    // --- DOM Elements ---
     const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
     
-    userInput.addEventListener('keydown', (e) => {
-        // If Enter is pressed WITH Ctrl or Meta(Command), Send.
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault(); // Prevent newline
-            sendMessage();
-        }
-        // If Just Enter is pressed, do nothing (Standard behavior = New Line)
+    // --- Input Logic ---
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        if(this.value.trim() !== '') sendBtn.classList.add('active');
+        else sendBtn.classList.remove('active');
     });
 
-    // --- 3. Sidebar & Logic ---
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // --- UI Toggles ---
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
     
+    function toggleSettings() { 
+        const el = document.getElementById('settingsPanel');
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    // CLOSE PANEL logic: Click outside the box to close
+    document.getElementById('settingsPanel').addEventListener('mousedown', function(e) {
+        if(e.target === this) toggleSettings();
+    });
+
+    function copyCode(btn, encoded) {
+        navigator.clipboard.writeText(decodeURIComponent(encoded));
+        const original = btn.innerHTML;
+        btn.innerHTML = `<span class="material-icons-round" style="font-size:14px;">check</span> Copied`;
+        setTimeout(() => btn.innerHTML = original, 2000);
+    }
+
+    // --- Chat Logic ---
     function renderSidebar() {
         const list = document.getElementById('historyList');
         list.innerHTML = '';
         chats.forEach(chat => {
             const div = document.createElement('div');
             div.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
-            div.innerHTML = `<span>${chat.title || 'New Chat'}</span> <span class="delete-chat" onclick="deleteChat('${chat.id}', event)">✕</span>`;
-            div.onclick = (e) => { if(e.target.tagName !== 'SPAN') loadChat(chat.id); }; // avoid conflict with delete
+            div.innerHTML = `
+                <div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">
+                    <span class="material-icons-round" style="font-size:16px;">chat_bubble_outline</span>
+                    <span style="overflow:hidden;text-overflow:ellipsis;">${chat.title || 'New Chat'}</span>
+                </div>
+                <span class="material-icons-round delete-chat" onclick="deleteChat('${chat.id}', event)">delete</span>
+            `;
+            div.onclick = (e) => { if(!e.target.classList.contains('delete-chat')) loadChat(chat.id); };
             list.appendChild(div);
         });
     }
@@ -394,115 +378,190 @@
     function startNewChat() {
         currentChatId = Date.now().toString();
         chats.unshift({ id: currentChatId, title: 'New Chat', messages: [] });
-        localStorage.setItem('chats', JSON.stringify(chats));
+        saveChats();
         document.getElementById('chatContainer').innerHTML = '';
+        document.getElementById('emptyState').style.display = 'block';
         renderSidebar();
-        document.getElementById('sidebar').classList.remove('open');
+        if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
     }
 
     function loadChat(id) {
         currentChatId = id;
         const chat = chats.find(c => c.id === id);
         document.getElementById('chatContainer').innerHTML = '';
-        if(chat) {
-            chat.messages.forEach(m => appendMessage(m.role, m.text, m.image, false));
-        }
+        document.getElementById('emptyState').style.display = 'none';
+        if(chat) chat.messages.forEach(m => appendMessage(m.role, m.text, m.image));
         renderSidebar();
-        document.getElementById('sidebar').classList.remove('open');
+        if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
     }
 
     function deleteChat(id, e) {
         e.stopPropagation();
-        if(confirm('Delete this?')) {
+        if(confirm('Delete chat?')) {
             chats = chats.filter(c => c.id !== id);
-            localStorage.setItem('chats', JSON.stringify(chats));
-            if(currentChatId === id) window.location.reload();
-            renderSidebar();
+            saveChats();
+            if(currentChatId === id) startNewChat();
+            else renderSidebar();
         }
     }
 
-    // --- 4. Settings & API ---
-    function toggleSettings() {
-        const el = document.getElementById('settingsPanel');
-        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-    }
+    function saveChats() { localStorage.setItem('chats', JSON.stringify(chats)); }
 
-    function saveSettings() {
-        localStorage.setItem('cfg_provider', document.getElementById('primaryProvider').value);
-        localStorage.setItem('cfg_sys', document.getElementById('sysPrompt').value);
-        localStorage.setItem('cfg_groq_key', document.getElementById('groqKey').value);
-        localStorage.setItem('cfg_groq_model', document.getElementById('groqModel').value);
-        localStorage.setItem('cfg_hf_key', document.getElementById('hfKey').value);
-        localStorage.setItem('cfg_hf_model', document.getElementById('hfModel').value);
-        toggleSettings();
-    }
+    function appendMessage(role, text, image, isStreaming = false) {
+        document.getElementById('emptyState').style.display = 'none';
+        const container = document.getElementById('chatContainer');
 
-    // Load settings on boot
-    (function loadConfig() {
-        document.getElementById('primaryProvider').value = localStorage.getItem('cfg_provider') || 'groq';
-        document.getElementById('sysPrompt').value = localStorage.getItem('cfg_sys') || '';
-        document.getElementById('groqKey').value = localStorage.getItem('cfg_groq_key') || '';
-        document.getElementById('groqModel').value = localStorage.getItem('cfg_groq_model') || 'llama-3.1-8b-instant';
-        document.getElementById('hfKey').value = localStorage.getItem('cfg_hf_key') || '';
-        document.getElementById('hfModel').value = localStorage.getItem('cfg_hf_model') || 'mistralai/Mixtral-8x7B-Instruct-v0.1';
+        if(isStreaming && role === 'ai') {
+            const last = container.lastElementChild;
+            if(last && last.classList.contains('ai')) {
+                const bubble = last.querySelector('.message');
+                bubble.innerHTML = marked.parse(text) + '<span class="cursor"></span>';
+                container.scrollTop = container.scrollHeight;
+                last.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+                return;
+            }
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `message-wrapper ${role}`;
         
-        if(chats.length) renderSidebar();
-        else startNewChat();
-    })();
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.innerHTML = role === 'ai' ? '<span class="material-icons-round" style="font-size:20px;">smart_toy</span>' : '';
+        if(role === 'ai') wrapper.appendChild(avatar);
 
-    // --- 5. Sending Logic ---
+        const bubble = document.createElement('div');
+        bubble.className = `message ${role}`;
+        
+        let html = '';
+        if(image && role === 'user') html += `<img src="${image}" style="max-height:200px;border-radius:8px;display:block;margin-bottom:10px;">`;
+        
+        if(role === 'ai') html += marked.parse(text) + (isStreaming ? '<span class="cursor"></span>' : '');
+        else html += text.replace(/\n/g, '<br>');
+
+        bubble.innerHTML = html;
+        wrapper.appendChild(bubble);
+        container.appendChild(wrapper);
+        container.scrollTop = container.scrollHeight;
+        
+        if(role === 'ai') wrapper.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+    }
+
+    // --- API Logic ---
     async function sendMessage() {
         const text = userInput.value.trim();
-        const sendBtn = document.getElementById('sendBtn');
-        
-        if (!text && !currentAttachment) return;
+        if(!text && !currentAttachment) return;
 
-        // UI Prep
+        const img = currentAttachment && currentAttachment.type === 'image' ? currentAttachment.content : null;
+        const fileTxt = currentAttachment && currentAttachment.type === 'text' ? `\n\n[File Content]:\n${currentAttachment.content}` : '';
+        const fullPrompt = text + fileTxt;
+
+        appendMessage('user', text, img);
+        
+        // Save user msg
+        const chat = chats.find(c => c.id === currentChatId);
+        if(chat) {
+            chat.messages.push({ role:'user', text, image:img });
+            if(chat.messages.length === 1) chat.title = text.substring(0, 30);
+            saveChats();
+            renderSidebar();
+        }
+
         userInput.value = '';
-        const tempAttachment = currentAttachment;
+        userInput.style.height = '24px';
         clearFile();
-        
-        // VISIBILITY FIX: Append immediately
-        const displayImg = (tempAttachment && tempAttachment.type === 'image') ? tempAttachment.content : null;
-        appendMessage('user', text, displayImg, true);
-
-        sendBtn.disabled = true;
-        sendBtn.innerText = '...';
+        document.getElementById('sendBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'block';
 
         const provider = localStorage.getItem('cfg_provider') || 'groq';
-        const sys = localStorage.getItem('cfg_sys') || '';
+        const key = localStorage.getItem('cfg_groq_key');
+        const sys = localStorage.getItem('cfg_sys') || 'You are a helpful AI.';
+
+        if(!key) {
+            appendMessage('ai', 'Please set your API Key in Settings.');
+            stopGeneration();
+            return;
+        }
+
+        let aiText = "";
+        appendMessage('ai', "", null, false); // Placeholder
+        abortController = new AbortController();
 
         try {
-            let reply;
-            try {
-                if (provider === 'groq') reply = await callGroq(text, tempAttachment, sys);
-                else reply = await callHF(text, tempAttachment, sys);
-            } catch (e) {
-                console.warn('Primary failed, swapping...', e);
-                if (provider === 'groq') reply = await callHF(text, tempAttachment, sys);
-                else reply = await callGroq(text, tempAttachment, sys);
+            if(provider === 'groq') {
+                await streamGroq(key, sys, fullPrompt, img, (chunk) => {
+                    aiText += chunk;
+                    appendMessage('ai', aiText, null, true);
+                });
+            } else {
+                aiText = await callHF(key, sys, fullPrompt);
+                appendMessage('ai', aiText, null, true);
             }
-            appendMessage('ai', reply);
-        } catch (err) {
-            appendMessage('ai', `**Error:** All providers failed. Check your API Keys.`);
+            
+            if(chat) {
+                chat.messages.push({ role:'ai', text:aiText });
+                saveChats();
+            }
+        } catch (e) {
+            if(e.name !== 'AbortError') appendMessage('ai', `Error: ${e.message}`);
         } finally {
-            sendBtn.disabled = false;
-            sendBtn.innerText = '➤';
+            stopGeneration();
         }
     }
 
-    // File Handlers
+    function stopGeneration() {
+        if(abortController) abortController.abort();
+        abortController = null;
+        document.getElementById('sendBtn').style.display = 'block';
+        document.getElementById('stopBtn').style.display = 'none';
+        document.querySelectorAll('.cursor').forEach(e => e.remove());
+    }
+
+    async function streamGroq(key, sys, prompt, img, onChunk) {
+        const msgs = [{role:'system', content:sys}];
+        if(img) msgs.push({role:'user', content:[{type:'text', text:prompt||'Describe image'}, {type:'image_url', image_url:{url:img}}]});
+        else msgs.push({role:'user', content:prompt});
+
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST", headers: {"Authorization":`Bearer ${key}`, "Content-Type":"application/json"},
+            body: JSON.stringify({ model: "llama-3.1-70b-versatile", messages: msgs, stream: true }),
+            signal: abortController.signal
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        while(true) {
+            const {done, value} = await reader.read();
+            if(done) break;
+            const lines = decoder.decode(value).split('\n');
+            for(const line of lines) {
+                if(line.startsWith('data: ') && line !== 'data: [DONE]') {
+                    try { onChunk(JSON.parse(line.substring(6)).choices[0].delta.content || ""); } catch(e){}
+                }
+            }
+        }
+    }
+
+    async function callHF(key, sys, prompt) {
+        const res = await fetch("https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1", {
+            method: "POST", headers: {"Authorization":`Bearer ${key}`, "Content-Type":"application/json"},
+            body: JSON.stringify({ inputs: `${sys}\nUser:${prompt}\nAssistant:`, parameters: {max_new_tokens:1000} })
+        });
+        const d = await res.json();
+        return Array.isArray(d) ? d[0].generated_text : d.generated_text;
+    }
+
+    // --- File Utils ---
     function handleFile() {
         const f = document.getElementById('fileInput').files[0];
         if(!f) return;
         const r = new FileReader();
-        const isImg = f.type.startsWith('image/');
         r.onload = (e) => {
-            currentAttachment = { type: isImg?'image':'text', content: e.target.result };
+            currentAttachment = {type: f.type.startsWith('image/')?'image':'text', content:e.target.result};
             document.getElementById('filePreview').style.display = 'flex';
             document.getElementById('fileName').innerText = f.name;
         };
-        isImg ? r.readAsDataURL(f) : r.readAsText(f);
+        f.type.startsWith('image/') ? r.readAsDataURL(f) : r.readAsText(f);
     }
     function clearFile() {
         document.getElementById('fileInput').value = '';
@@ -510,45 +569,20 @@
         currentAttachment = null;
     }
 
-    // API Calls
-    async function callGroq(prompt, attach, sys) {
-        const k = localStorage.getItem('cfg_groq_key');
-        const m = localStorage.getItem('cfg_groq_model');
-        if(!k) throw new Error("No Key");
-        
-        let msgs = [];
-        if(attach && attach.type === 'image') {
-            msgs = [{ role: 'user', content: [{type:'text', text:prompt||"Describe this"}, {type:'image_url', image_url:{url:attach.content}}] }];
-        } else {
-            let p = prompt + (attach && attach.type === 'text' ? `\n\nFile:\n${attach.content}` : '');
-            msgs = [{ role: 'user', content: p }];
-        }
-
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST', headers: {'Authorization':`Bearer ${k}`, 'Content-Type':'application/json'},
-            body: JSON.stringify({ model: m, messages: [{role:'system', content:sys}, ...msgs] })
-        });
-        const d = await res.json();
-        if(d.error) throw new Error(d.error.message);
-        return d.choices[0].message.content;
+    function saveSettings() {
+        localStorage.setItem('cfg_provider', document.getElementById('primaryProvider').value);
+        localStorage.setItem('cfg_groq_key', document.getElementById('groqKey').value);
+        localStorage.setItem('cfg_sys', document.getElementById('sysPrompt').value);
+        toggleSettings();
+        document.getElementById('currentModelDisplay').innerText = document.getElementById('primaryProvider').value === 'groq' ? 'Llama 3' : 'Mistral';
     }
 
-    async function callHF(prompt, attach, sys) {
-        const k = localStorage.getItem('cfg_hf_key');
-        const m = localStorage.getItem('cfg_hf_model');
-        if(!k) throw new Error("No Key");
-        
-        let p = `${sys}\nUser: ${prompt}` + (attach && attach.type === 'text' ? `\nFile:${attach.content}` : '') + "\nAssistant:";
-        
-        const res = await fetch(`https://api-inference.huggingface.co/models/${m}`, {
-            method: 'POST', headers: {'Authorization':`Bearer ${k}`, 'Content-Type':'application/json'},
-            body: JSON.stringify({ inputs: p, parameters: {max_new_tokens:1000, return_full_text:false} })
-        });
-        const d = await res.json();
-        if(d.error) throw new Error(d.error);
-        return Array.isArray(d) ? d[0].generated_text : d.generated_text;
-    }
+    (function init() {
+        document.getElementById('primaryProvider').value = localStorage.getItem('cfg_provider') || 'groq';
+        document.getElementById('groqKey').value = localStorage.getItem('cfg_groq_key') || '';
+        document.getElementById('sysPrompt').value = localStorage.getItem('cfg_sys') || '';
+        if(chats.length > 0) renderSidebar(); else startNewChat();
+    })();
 </script>
-
 </body>
 </html>
