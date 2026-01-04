@@ -273,116 +273,7 @@
 
     <script src="env.js"></script>
 
-    <script>
-        // --- CONFIGURATION ---
-        const dom = {
-            inp: document.getElementById('inp'),
-            btn: document.getElementById('send-btn'),
-            feed: document.getElementById('feed'),
-            badge: document.getElementById('status-badge')
-        };
-
-        let chatHistory = [];
-        let KEYS = {};
-
-        // --- INIT CHECK ---
-        window.onload = () => {
-            if (typeof CONFIG === 'undefined') {
-                addMessage("⚠️ **System Error**: `env.js` is missing. Please create it with your API keys.", 'ai');
-                dom.btn.disabled = true;
-                setStatus("ERROR", "red");
-            } else {
-                KEYS = CONFIG;
-                dom.inp.focus();
-            }
-        };
-
-        marked.setOptions({
-            highlight: (code, lang) => {
-                const language = highlight.getLanguage(lang) ? lang : 'plaintext';
-                return highlight.highlight(code, { language }).value;
-            },
-            langPrefix: 'hljs language-'
-        });
-
-        // --- EVENT LISTENERS ---
-        dom.inp.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-        });
-
-        dom.inp.addEventListener('keydown', (e) => {
-            if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-        });
-
-        dom.btn.addEventListener('click', handleSend);
-
-        // --- CORE LOGIC ---
-        async function handleSend() {
-            const text = dom.inp.value.trim();
-            if (!text) return;
-
-            addMessage(text, 'user');
-            dom.inp.value = '';
-            dom.inp.style.height = 'auto';
-            dom.inp.focus();
-
-            // Detect Art Intent
-            const lower = text.toLowerCase();
-            const artTrigger = /^(draw|image|generate|paint|lukis)\s/i.test(lower);
-
-            if (artTrigger) {
-                setStatus("PAINTING...", "#d946ef"); // Pink for art
-                await generateArt(text);
-            } else {
-                setStatus("THINKING...", "#fbbf24"); // Amber for thinking
-                const loaderId = addLoader();
-
-                // Add to history
-                chatHistory.push({ role: "user", content: text });
-
-                // Try Groq -> Fallback Gemini
-                let response = await callGroq();
-                if (!response) {
-                    setStatus("REROUTING...", "#f97316"); // Orange
-                    response = await callGemini();
-                }
-
-                removeLoader(loaderId);
-                
-                if (response) {
-                    addMessage(response, 'ai');
-                    chatHistory.push({ role: "assistant", content: response });
-                    if(chatHistory.length > 20) chatHistory.splice(0, 2); // Keep context small
-                } else {
-                    addMessage("I'm sorry, my servers are currently unresponsive.", 'ai');
-                }
-            }
-            setStatus("READY", "#10b981");
-        }
-
-        // --- API 1: GROQ ---
-        async function callGroq() {
-            try {
-                const messages = [
-                    { role: "system", content: "You are an expert AI developer assistant. Be concise, professional, and use Markdown." },
-                    ...chatHistory
-                ];
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { "Authorization": `Bearer ${KEYS.GROQ}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, temperature: 0.7 })
-                });
-                if(!res.ok) throw new Error();
-                const data = await res.json();
-                return data.choices[0].message.content;
-            } catch (e) { return null; }
-        }
-
-        // --- API 2: GEMINI ---
-        async function callGemini() {
-            try {
-                const parts = chatHistory.map(m => ({
+    chatHistory.map(m => ({
                     role: m.role === "user" ? "user" : "model",
                     parts: [{ text: m.content }]
                 }));
@@ -458,12 +349,206 @@
 
                     pre.parentNode.insertBefore(wrapper, pre);
                     wrapper.appendChild(header);
+    <script>
+        // --- CONFIGURATION ---
+        const dom = {
+            inp: document.getElementById('inp'),
+            btn: document.getElementById('send-btn'),
+            feed: document.getElementById('feed'),
+            badge: document.getElementById('status-badge')
+        };
+
+        let chatHistory = [];
+        let KEYS = { GROQ: "", GEMINI: "", HF: "" }; // Default empty keys
+
+        // --- INIT CHECK ---
+        window.onload = () => {
+            // Check if env.js loaded CONFIG
+            if (typeof CONFIG === 'undefined') {
+                addMessage("⚠️ **System Error**: `env.js` file is missing or has a syntax error.", 'ai');
+                addMessage("Please ensure `const CONFIG = { ... }` is defined correctly.", 'ai');
+                setStatus("OFFLINE", "red");
+            } else {
+                KEYS = CONFIG;
+                // Check if at least one key exists
+                if (!KEYS.GROQ && !KEYS.GEMINI) {
+                    addMessage("⚠️ **No Keys Found**: Connected, but Groq/Gemini keys are empty in `env.js`.", 'ai');
+                    setStatus("NO KEYS", "orange");
+                }
+            }
+        };
+
+        marked.setOptions({
+            highlight: (code, lang) => {
+                const language = highlight.getLanguage(lang) ? lang : 'plaintext';
+                return highlight.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-'
+        });
+
+        // --- EVENT LISTENERS ---
+        dom.inp.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        dom.inp.addEventListener('keydown', (e) => {
+            if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+        });
+
+        dom.btn.addEventListener('click', handleSend);
+
+        // --- CORE LOGIC ---
+        async function handleSend() {
+            const text = dom.inp.value.trim();
+            if (!text) return;
+
+            // 1. Check if we have keys before trying
+            if (typeof CONFIG === 'undefined') {
+                alert("Cannot send: env.js is missing.");
+                return;
+            }
+
+            addMessage(text, 'user');
+            dom.inp.value = '';
+            dom.inp.style.height = 'auto';
+            dom.inp.focus();
+
+            const lower = text.toLowerCase();
+            const artTrigger = /^(draw|image|generate|paint|lukis)\s/i.test(lower);
+
+            if (artTrigger) {
+                if (!KEYS.HF) {
+                    addMessage("⚠️ **Error**: You are trying to generate art, but the `HF` key is missing in `env.js`.", 'ai');
+                    return;
+                }
+                setStatus("PAINTING...", "#d946ef");
+                await generateArt(text);
+            } else {
+                
+                // Logic: Try Groq -> If fail/empty -> Try Gemini
+                const hasGroq = KEYS.GROQ && KEYS.GROQ.length > 5;
+                const hasGemini = KEYS.GEMINI && KEYS.GEMINI.length > 5;
+
+                if (!hasGroq && !hasGemini) {
+                    addMessage("⚠️ **Error**: Both Groq and Gemini keys are missing. I cannot reply.", 'ai');
+                    return;
+                }
+
+                setStatus("THINKING...", "#fbbf24");
+                const loaderId = addLoader();
+                chatHistory.push({ role: "user", content: text });
+
+                let response = null;
+
+                // Priority 1: Groq
+                if (hasGroq) {
+                    response = await callGroq();
+                }
+
+                // Priority 2: Gemini (if Groq failed or is missing)
+                if (!response && hasGemini) {
+                    if (hasGroq) setStatus("SWITCHING...", "#f97316"); // Let user know we are trying backup
+                    response = await callGemini();
+                }
+
+                removeLoader(loaderId);
+                
+                if (response) {
+                    addMessage(response, 'ai');
+                    chatHistory.push({ role: "assistant", content: response });
+                    if(chatHistory.length > 20) chatHistory.splice(0, 2);
+                } else {
+                    addMessage("⚠️ **Connection Failed**: I have keys, but the servers are rejecting them. Please check if your API keys are correct.", 'ai');
+                }
+            }
+            setStatus("READY", "#10b981");
+        }
+
+        // --- API 1: GROQ ---
+        async function callGroq() {
+            try {
+                const messages = [
+                    { role: "system", content: "You are an expert AI assistant. Use Markdown." },
+                    ...chatHistory
+                ];
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${KEYS.GROQ}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, temperature: 0.7 })
+                });
+                if(!res.ok) throw new Error();
+                const data = await res.json();
+                return data.choices[0].message.content;
+            } catch (e) { return null; }
+        }
+
+        // --- API 2: GEMINI ---
+        async function callGemini() {
+            try {
+                const parts = chatHistory.map(m => ({
+                    role: m.role === "user" ? "user" : "model",
+                    parts: [{ text: m.content }]
+                }));
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEYS.GEMINI}`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: parts })
+                });
+                const data = await res.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (e) { return null; }
+        }
+
+        // --- API 3: FLUX ART ---
+        async function generateArt(prompt) {
+            try {
+                const cleanPrompt = prompt.replace(/^(draw|image|generate|paint|lukis)\s/i, '');
+                const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+                    headers: { Authorization: `Bearer ${KEYS.HF}`, "Content-Type": "application/json" },
+                    method: "POST", body: JSON.stringify({ inputs: cleanPrompt }),
+                });
+                if (!res.ok) throw new Error();
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                
+                const div = document.createElement('div');
+                div.className = "msg-row a-row";
+                div.innerHTML = `<div class="msg a-msg" style="padding:0; background:transparent; border:none;"><div class="art-wrapper"><img src="${url}" class="art-result" onload="scrollToBottom()"><div class="art-tag">FLUX.1</div></div></div>`;
+                dom.feed.appendChild(div);
+                scrollToBottom();
+            } catch (e) {
+                addMessage("⚠️ Art server busy or Key invalid.", 'ai');
+            }
+        }
+
+        // --- UI UTILS ---
+        function addMessage(text, sender) {
+            const row = document.createElement('div');
+            row.className = `msg-row ${sender === 'user' ? 'u-row' : 'a-row'}`;
+            const bubble = document.createElement('div');
+            bubble.className = `msg ${sender === 'user' ? 'u-msg' : 'a-msg'}`;
+            
+            if (sender === 'ai') {
+                bubble.innerHTML = marked.parse(text);
+                bubble.querySelectorAll('pre').forEach(pre => {
+                    // Simple Copy Button Logic for better performance
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    const btn = document.createElement('button');
+                    btn.className = 'copy-btn';
+                    btn.innerText = 'Copy';
+                    btn.style.position = 'absolute';
+                    btn.style.top = '10px';
+                    btn.style.right = '10px';
+                    btn.onclick = () => { navigator.clipboard.writeText(pre.innerText); btn.innerText = 'Copied!'; setTimeout(()=>btn.innerText='Copy', 2000); };
+                    
+                    pre.parentNode.insertBefore(wrapper, pre);
                     wrapper.appendChild(pre);
+                    wrapper.appendChild(btn);
                 });
             } else {
                 bubble.innerText = text;
             }
-
             row.appendChild(bubble);
             dom.feed.appendChild(row);
             scrollToBottom();
@@ -480,27 +565,16 @@
             return id;
         }
 
-        function removeLoader(id) {
-            const el = document.getElementById(id);
-            if(el) el.remove();
+        function removeLoader(id) { const el = document.getElementById(id); if(el) el.remove(); }
+        function setStatus(text, color) { 
+            dom.badge.innerText = text; 
+            dom.badge.style.color = color; 
+            dom.badge.style.borderColor = color; 
+            dom.badge.style.background = color + '1a'; 
         }
-
-        function setStatus(text, color) {
-            dom.badge.innerText = text;
-            dom.badge.style.color = color;
-            dom.badge.style.borderColor = color;
-            dom.badge.style.background = color + '1a'; // 10% opacity
-        }
-
-        function scrollToBottom() {
-            dom.feed.scrollTop = dom.feed.scrollHeight;
-        }
-
-        function clearChat() {
-            chatHistory = [];
-            dom.feed.innerHTML = '';
-            addMessage("Chat cleared.", 'ai');
-        }
+        function scrollToBottom() { dom.feed.scrollTop = dom.feed.scrollHeight; }
+        function clearChat() { chatHistory = []; dom.feed.innerHTML = ''; addMessage("Chat cleared.", 'ai'); }
     </script>
+
 </body>
 </html>
