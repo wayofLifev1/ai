@@ -645,8 +645,7 @@ function scrollToBottom() {
     }
 
     // --- APIs ---
-        async function streamGroq(key, model, sys, prompt, imageUrl, onChunk) {
-        async function streamGroq(key, model, sys, prompt, imageUrl, onChunk) {
+           async function streamGroq(key, model, sys, prompt, imageUrl, onChunk) {
     const messages = [{ role: "system", content: sys }];
     if (imageUrl) {
         messages.push({
