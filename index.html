@@ -658,7 +658,7 @@
         // FIX: Auto-switch to Vision Model if image present
         let targetModel = model;
         if (imageUrl && !model.includes('vision')) {
-            targetModel = 'llama-3.2-11b-vision-preview'; // Fallback to a free vision model
+            targetModel = 'llama-3.2-90b-vision-preview'; // Fallback to a free vision model
         }
 
         const messages = [{ role: "system", content: sys }];
