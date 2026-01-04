@@ -300,8 +300,8 @@
                 <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach Image/File">
                     <span class="material-icons-round">add_circle_outline</span>
                 </button>
-                <textarea id="userInput" placeholder="Ask anything..." rows="1"></textarea>
-                <button class="icon-btn send" id="sendBtn" onclick="sendMessage()">
+                <textarea id="userInput" placeholder="Ask anything..." rows="1" enterkeyhint="send"></textarea>
+   <button class="icon-btn send" id="sendBtn" onclick="sendMessage()">
                     <span class="material-icons-round">send</span>
                 </button>
                 <button class="icon-btn" id="stopBtn" onclick="stopGeneration()" style="display:none; color: #b3261e;">
@@ -404,17 +404,21 @@
     
         // Handle Enter Key to Send
     userInput.addEventListener('keydown', (e) => {
-        // Check if the key pressed is 'Enter'
-        if (e.key === 'Enter') {
+        // Handle Enter Key to Send
+    userInput.addEventListener('keydown', (e) => {
+        // Check if the key is 'Enter' OR keycode is 13 (better for mobile)
+        if (e.key === 'Enter' || e.keyCode === 13) {
             // If Shift is NOT pressed, we want to send
             if (!e.shiftKey) {
                 e.preventDefault(); // STOP the new line
                 sendMessage();      // SEND the message
+                
+                // Optional: Close keyboard on mobile after sending
+                // document.getElementById('userInput').blur(); 
             }
-            // If Shift IS pressed, the code does nothing, 
-            // allowing the browser to create a new line as usual.
         }
     });
+        
 
 
     // --- UI Logic ---
