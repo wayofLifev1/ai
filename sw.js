@@ -2,10 +2,10 @@ const CACHE_NAME = "ai-app-v2"; // Change to v3, v4, etc. to force an update
 const ASSETS = [
   "./",
   "./index.html",
-  // "./env.js",             // Only uncomment if you actually have this file
-  // "./manifest.json",      // Only uncomment if you have a physical manifest file
-  // "./icons/icon-192.png", // Only uncomment if you have these icons
-  // "./icons/icon-512.png",
+  "./env.js",             // Only uncomment if you actually have this file
+   "./manifest.json",      // Only uncomment if you have a physical manifest file
+  "./icons/icon-192.png", // Only uncomment if you have these icons
+  "./icons/icon-512.png",
   "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark-reasonable.min.css",
   "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js",
