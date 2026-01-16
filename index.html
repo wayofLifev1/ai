@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#fdfbf7">
+    <meta name="description" content="AI Workspace">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>AI Workspace Pro</title>
+    <title>AI Workspace</title>
     
-<link rel="manifest" href="./manifest.json">
-    
+    <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon-192.png">
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -17,227 +17,103 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            /* Theme Variables */
-            --bg-body: #fdfbf7;
-            --bg-sidebar: #f4f1ea;
-            --bg-surface: #ffffff;
-            --bg-user: #e8e4dc;
-            --text-main: #2d2a26;
-            --text-muted: #8c8682;
-            --accent: #8d7b68;
-            --accent-rgb: 141, 123, 104;
-            --border: #e6e2dd;
-            --glass: rgba(253, 251, 247, 0.95);
-            --font-main: 'Plus Jakarta Sans', sans-serif;
-            --font-code: 'JetBrains Mono', monospace;
-            --safe-area-bottom: env(safe-area-inset-bottom);
+            --bg-body: #fdfbf7; --bg-sidebar: #f4f1ea; --bg-surface: #ffffff;
+            --bg-user: #e8e4dc; --text-main: #2d2a26; --text-muted: #8c8682;
+            --accent: #8d7b68; --border: #e6e2dd; --glass: rgba(253, 251, 247, 0.95);
+            --font-main: 'Plus Jakarta Sans', sans-serif; --font-code: 'JetBrains Mono', monospace;
+            --safe-bottom: env(safe-area-inset-bottom);
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: var(--font-main); background: var(--bg-body); margin: 0; display: flex; height: 100vh; height: 100dvh; color: var(--text-main); overflow: hidden; }
 
-        body {
-            font-family: var(--font-main); background: var(--bg-body); margin: 0;
-            display: flex; height: 100vh; height: 100dvh; color: var(--text-main); overflow: hidden;
-        }
-
-        /* --- SIDEBAR --- */
-        #sidebar {
-            width: 280px; background: var(--bg-sidebar); display: flex; flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); position: absolute; height: 100%;
-            z-index: 1000; transform: translateX(-100%); border-right: 1px solid var(--border);
-        }
+        /* SIDEBAR */
+        #sidebar { width: 280px; background: var(--bg-sidebar); display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1); position: absolute; height: 100%; z-index: 1000; transform: translateX(-100%); border-right: 1px solid var(--border); }
         @media (min-width: 850px) { #sidebar { position: relative; transform: translateX(0); } }
         #sidebar.open { transform: translateX(0); box-shadow: 100vw 0 0 rgba(0,0,0,0.2); }
-
         .sidebar-header { padding: 30px 20px 20px; }
-        .btn-new {
-            width: 100%; padding: 14px; background: var(--bg-surface); color: var(--text-main);
-            border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600;
-            display: flex; align-items: center; gap: 10px; transition: 0.2s;
-        }
-        .btn-new:active { transform: scale(0.96); }
-
+        .btn-new { width: 100%; padding: 14px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; }
         .history-list { flex: 1; overflow-y: auto; padding: 10px 15px; }
-        .history-item {
-            padding: 12px; margin-bottom: 4px; border-radius: 10px; cursor: pointer; font-size: 0.9rem;
-            display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
-        }
-        .history-item.active { background: white; border: 1px solid var(--border); font-weight: 700; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .del-btn { opacity: 0; padding: 5px; color: #b3261e; }
+        .history-item { padding: 12px; margin-bottom: 4px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        .history-item.active { background: white; border: 1px solid var(--border); font-weight: 700; }
+        .del-btn { opacity: 0; color: #b3261e; padding: 4px; }
         .history-item.active .del-btn { opacity: 1; }
+        
+        /* INSTALL BUTTON */
+        #installBtn { display: none; width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; margin-top: 10px; cursor: pointer; justify-content: center; gap: 8px; }
 
-        /* --- MAIN CONTENT --- */
+        /* MAIN */
         .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
-
-        header {
-            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
-            background: var(--glass); backdrop-filter: blur(10px); z-index: 10;
-            border-bottom: 1px solid rgba(0,0,0,0.03); position: absolute; width: 100%; top:0;
-        }
-
-        .header-actions { display: flex; gap: 8px; }
-
-        /* --- CHAT AREA --- */
-        #chatContainer {
-            flex: 1; overflow-y: auto; padding: 80px 5% 180px; /* Extra bottom padding for Quick Actions */
-            display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
-            width: 100%; max-width: 900px; margin: 0 auto;
-        }
-
-        .message-wrapper { display: flex; gap: 12px; opacity: 0; animation: slideIn 0.3s forwards; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--glass); backdrop-filter: blur(10px); z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.03); position: absolute; width: 100%; top:0; }
+        #chatContainer { flex: 1; overflow-y: auto; padding: 80px 5% 180px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; width: 100%; max-width: 900px; margin: 0 auto; }
+        
+        /* MESSAGES */
+        .message-wrapper { display: flex; gap: 12px; opacity: 0; animation: fadeIn 0.3s forwards; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
         .message-wrapper.user { justify-content: flex-end; }
-
-        .avatar {
-            width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center;
-            justify-content: center; flex-shrink: 0; background: var(--accent); color: white;
-            font-size: 14px; margin-top: 4px;
-        }
-
+        .avatar { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 4px; }
         .message { max-width: 85%; font-size: 1rem; line-height: 1.6; }
         .message.user { background: var(--bg-user); padding: 10px 16px; border-radius: 18px; border-top-right-radius: 4px; }
-        
         .message.ai p { margin-top: 0; }
         .message.ai pre { background: #1e1e1e; padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.9em; }
-        
-        /* --- INPUT & QUICK ACTIONS --- */
-        .input-dock {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: linear-gradient(to top, var(--bg-body) 90%, transparent);
-            padding: 10px 20px calc(20px + var(--safe-area-bottom));
-            display: flex; flex-direction: column; gap: 10px; z-index: 20;
-        }
 
-        /* Quick Actions Bar */
-        .quick-actions {
-            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;
-            max-width: 900px; margin: 0 auto; width: 100%;
-            scrollbar-width: none; /* Hide scrollbar Firefox */
-        }
-        .quick-actions::-webkit-scrollbar { display: none; }
-        
-        .chip {
-            white-space: nowrap; background: white; border: 1px solid var(--border);
-            padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; color: var(--text-muted);
-            cursor: pointer; transition: 0.2s; font-weight: 500; display: flex; align-items: center; gap: 5px;
-        }
-        .chip:active { background: var(--accent); color: white; transform: scale(0.95); }
-
-        .input-box {
-            background: var(--bg-surface); border-radius: 26px; padding: 8px 14px;
-            border: 1px solid var(--border); box-shadow: 0 5px 20px rgba(0,0,0,0.04);
-            display: flex; flex-direction: column; transition: 0.2s;
-            max-width: 900px; margin: 0 auto; width: 100%;
-        }
-        .input-box:focus-within { border-color: var(--accent); box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.15); }
-
+        /* INPUT AREA */
+        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, var(--bg-body) 90%, transparent); padding: 10px 20px calc(20px + var(--safe-bottom)); display: flex; flex-direction: column; gap: 10px; z-index: 20; }
+        .input-box { background: var(--bg-surface); border-radius: 26px; padding: 8px 14px; border: 1px solid var(--border); box-shadow: 0 5px 20px rgba(0,0,0,0.04); display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; width: 100%; }
         .file-preview { display: none; padding: 6px 10px; border-bottom: 1px solid var(--border); margin-bottom: 5px; font-size: 0.8rem; align-items: center; justify-content: space-between; }
-        
         .main-input-row { display: flex; align-items: flex-end; gap: 8px; }
-        
-        textarea {
-            width: 100%; background: transparent; border: none; padding: 12px 0;
-            resize: none; outline: none; font-family: inherit; font-size: 1rem; max-height: 140px;
-        }
-
-        .icon-btn { background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-muted); border-radius: 50%; transition: 0.2s; }
-        .icon-btn:hover { background: var(--bg-sidebar); color: var(--text-main); }
-        .icon-btn.active { color: var(--accent); background: #fdfbf7; border: 1px solid var(--border); }
-
-        .send-btn { 
-            background: var(--accent); color: white; width: 38px; height: 38px; 
-            display: flex; align-items: center; justify-content: center; border-radius: 50%;
-            transition: 0.2s;
-        }
+        textarea { width: 100%; background: transparent; border: none; padding: 12px 0; resize: none; outline: none; font-family: inherit; font-size: 1rem; max-height: 140px; }
+        .icon-btn { background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-muted); border-radius: 50%; }
+        .send-btn { background: var(--accent); color: white; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; }
         .send-btn:active { transform: scale(0.9); }
-        .stop-btn { background: #b3261e; }
 
-        /* SCROLL BUTTON */
-        #scrollBtn {
-            position: absolute; bottom: 180px; left: 50%; transform: translateX(-50%);
-            background: var(--text-main); color: white; padding: 8px 16px; border-radius: 20px;
-            font-size: 0.8rem; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; z-index: 15;
-            animation: bounce 0.5s ease;
-        }
-        @keyframes bounce { 0% { transform: translate(-50%, 5px); } 100% { transform: translate(-50%, 0); } }
-
-        /* SETTINGS MODAL */
-        #settingsOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(4px); z-index: 2000;
-        }
+        /* MODAL */
+        #settingsOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); z-index: 2000; }
         .modal { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; }
         .field { margin-bottom: 15px; }
         .field label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
         .field input, .field textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; }
-
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <div class="sidebar-header">
-        <button class="btn-new" onclick="haptics(); newChat()">
-            <span class="material-icons-round">add</span> New Chat
-        </button>
+        <button class="btn-new" onclick="newChat()"> <span class="material-icons-round">add</span> New Chat </button>
     </div>
     <div class="history-list" id="historyList"></div>
     <div style="padding: 20px; border-top: 1px solid var(--border);">
-        <button class="icon-btn" style="width:100%; border-radius:12px; display:flex; gap:10px; justify-content:flex-start; padding:12px;" onclick="haptics(); toggleSettings()">
-            <span class="material-icons-round">settings</span> Settings
-        </button>
+        <button id="installBtn" onclick="installApp()"> <span class="material-icons-round">download</span> Install App </button>
+        <button class="icon-btn" style="width:100%; border-radius:12px; display:flex; gap:10px; justify-content:flex-start; padding:12px;" onclick="toggleSettings()"> <span class="material-icons-round">settings</span> Settings </button>
     </div>
 </div>
 
 <div class="main-content" onclick="closeSidebar(event)">
     <header>
-        <button class="icon-btn" onclick="haptics(); document.getElementById('sidebar').classList.toggle('open')">
-            <span class="material-icons-round">menu</span>
-        </button>
+        <button class="icon-btn" onclick="document.getElementById('sidebar').classList.toggle('open')"> <span class="material-icons-round">menu</span> </button>
         <span style="font-weight:600;">Workspace</span>
-        <div class="header-actions">
-            <button class="icon-btn" id="ttsToggle" onclick="toggleTTS()" title="Text to Speech">
-                <span class="material-icons-round">volume_off</span>
-            </button>
-            <button class="icon-btn" onclick="haptics(); toggleSettings()">
-                <span class="material-icons-round">tune</span>
-            </button>
-        </div>
+        <button class="icon-btn" onclick="toggleSettings()"> <span class="material-icons-round">tune</span> </button>
     </header>
-
-    <div id="scrollBtn" onclick="scrollToBottom(true)">↓ New Messages</div>
 
     <div id="chatContainer">
         <div style="text-align:center; margin-top:20vh; opacity:0.6;">
             <h1 style="color:var(--accent);">Assalamualaikum</h1>
-            <p>How can I help you today?</p>
+            <p>Ready to assist.</p>
         </div>
     </div>
 
     <div class="input-dock">
-        <div class="quick-actions">
-            <div class="chip" onclick="quickPrompt('Summarize this')"><span class="material-icons-round" style="font-size:14px">short_text</span> Summarize</div>
-            <div class="chip" onclick="quickPrompt('Fix the code bugs')"><span class="material-icons-round" style="font-size:14px">bug_report</span> Debug</div>
-            <div class="chip" onclick="quickPrompt('Explain this simply')"><span class="material-icons-round" style="font-size:14px">school</span> Explain</div>
-            <div class="chip" onclick="quickPrompt('Draft an email about...')"><span class="material-icons-round" style="font-size:14px">mail</span> Email</div>
-        </div>
-
         <div class="input-box">
             <div class="file-preview" id="filePreview">
                 <span id="fileName">file</span>
                 <span class="material-icons-round" style="font-size:16px; cursor:pointer;" onclick="clearFile()">close</span>
             </div>
             <div class="main-input-row">
-                <button class="icon-btn" onclick="haptics(); document.getElementById('fileInput').click()">
-                    <span class="material-icons-round">attach_file</span>
-                </button>
+                <button class="icon-btn" onclick="document.getElementById('fileInput').click()"> <span class="material-icons-round">attach_file</span> </button>
                 <textarea id="userInput" rows="1" placeholder="Type a message..."></textarea>
-                <button id="sendBtn" class="send-btn" onclick="handleSendClick()">
-                    <span class="material-icons-round" id="sendIcon">arrow_upward</span>
-                </button>
+                <button id="sendBtn" class="send-btn" onclick="send()"> <span class="material-icons-round">arrow_upward</span> </button>
             </div>
         </div>
     </div>
@@ -251,125 +127,98 @@
             <h3 style="margin:0;">Settings</h3>
             <span class="material-icons-round" style="cursor:pointer;" onclick="toggleSettings()">close</span>
         </div>
-        <div class="field">
-            <label>Groq API Key</label>
-            <input type="password" id="groqKey" placeholder="gsk_...">
-        </div>
-        <div class="field">
-            <label>Hugging Face Key (Vision)</label>
-            <input type="password" id="hfKey" placeholder="hf_...">
-        </div>
-        <div class="field">
-            <label>System Prompt</label>
-            <textarea id="sysPrompt" rows="3">You are a helpful expert assistant.</textarea>
-        </div>
-        <button class="btn-new" style="background:var(--accent); color:white; justify-content:center;" onclick="saveSettings()">Save Configuration</button>
+        <div class="field"> <label>Groq API Key</label> <input type="password" id="groqKey" placeholder="gsk_..."> </div>
+        <div class="field"> <label>Hugging Face Key</label> <input type="password" id="hfKey" placeholder="hf_..."> </div>
+        <div class="field"> <label>System Prompt</label> <textarea id="sysPrompt" rows="3">You are a helpful expert assistant.</textarea> </div>
+        <button class="btn-new" style="background:var(--accent); color:white; justify-content:center;" onclick="saveSettings()">Save</button>
     </div>
 </div>
 
 <script>
-    // --- STATE ---
-    let state = {
-        chats: JSON.parse(localStorage.getItem('chats') || '[]'),
-        currentId: null,
-        attachment: null,
-        isGenerating: false,
-        abortCtrl: null,
-        ttsEnabled: false,
-        userScrolledUp: false
-    };
+    // --- PWA INSTALL ---
+    let deferredPrompt;
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault(); deferredPrompt = e;
+        document.getElementById('installBtn').style.display = 'flex';
+    });
+    async function installApp() {
+        if(!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if(outcome === 'accepted') document.getElementById('installBtn').style.display = 'none';
+        deferredPrompt = null;
+    }
 
-    // --- INIT ---
+    // --- APP LOGIC ---
+    let state = { chats: JSON.parse(localStorage.getItem('chats')||'[]'), id: null, file: null, abort: null };
+    marked.setOptions({ highlight: (code) => hljs.highlightAuto(code).value });
+
     function init() {
         document.getElementById('groqKey').value = localStorage.getItem('groqKey') || '';
         document.getElementById('hfKey').value = localStorage.getItem('hfKey') || '';
         document.getElementById('sysPrompt').value = localStorage.getItem('sysPrompt') || 'You are a helpful expert assistant.';
-        
-        // Chat Scroll Listener
-        document.getElementById('chatContainer').addEventListener('scroll', function() {
-            const isNearBottom = this.scrollHeight - this.scrollTop - this.clientHeight < 100;
-            state.userScrolledUp = !isNearBottom;
-            if(isNearBottom) document.getElementById('scrollBtn').style.display = 'none';
-        });
-
-        if (state.chats.length) renderHistory();
-        else newChat();
+        if(state.chats.length) renderHist(); else newChat();
     }
 
-    // --- CORE LOGIC ---
-    function handleSendClick() {
-        haptics();
-        if (state.isGenerating) {
-            stopGeneration();
-        } else {
-            sendMessage();
-        }
-    }
+    async function send() {
+        const text = document.getElementById('userInput').value.trim();
+        if(!text && !state.file) return;
 
-    async function sendMessage(textOverride = null) {
-        const text = textOverride || document.getElementById('userInput').value.trim();
-        if (!text && !state.attachment) return;
-
-        // UI Prep
-        appendMsg('user', text, state.attachment ? state.attachment.content : null);
+        // UI Update
+        const fileData = state.file; // Copy ref
+        appendMsg('user', text, fileData?.content);
         document.getElementById('userInput').value = '';
         document.getElementById('userInput').style.height = 'auto';
-        const fileData = state.attachment;
         clearFile();
-        
-        setGeneratingState(true);
 
-        // Data
-        if(!state.currentId) newChat();
-        const chat = state.chats.find(c => c.id === state.currentId);
+        // Save Data
+        if(!state.id) newChat();
+        const chat = state.chats.find(c => c.id === state.id);
         chat.messages.push({ role: 'user', content: text, image: fileData?.content });
-        if (chat.messages.length === 1) { chat.title = text.slice(0,25); renderHistory(); }
+        if(chat.messages.length===1) { chat.title = text.slice(0,25); renderHist(); }
         save();
 
-        // API Setup
-        state.abortCtrl = new AbortController();
-        const aiMsg = appendMsg('ai', '', null, true);
+        // API Call
+        const aiMsg = appendMsg('ai', '...');
         const groqK = document.getElementById('groqKey').value;
         const hfK = document.getElementById('hfKey').value;
-        let reply = "";
 
         try {
-            if (fileData && fileData.type === 'image') {
-                if(!hfK) throw new Error("Please add Hugging Face Key in settings");
+            let reply = "";
+            state.abort = new AbortController();
+
+            if (fileData && fileData.type.startsWith('image')) {
+                // Vision Logic
+                if(!hfK) throw new Error("Missing Hugging Face Key");
                 reply = await callVision(hfK, text || "Describe this", fileData.content);
                 aiMsg.innerHTML = marked.parse(reply);
             } else {
-                if(!groqK) throw new Error("Please add Groq Key in settings");
+                // Text Logic
+                if(!groqK) throw new Error("Missing Groq Key");
                 const msgs = [{role:"system", content:document.getElementById('sysPrompt').value}, ...chat.messages.slice(-8).map(m=>({role:m.role, content:m.content}))];
                 await streamGroq(groqK, msgs, (chunk) => {
                     reply += chunk;
-                    aiMsg.innerHTML = marked.parse(reply) + '<span style="display:inline-block;width:8px;height:14px;background:var(--accent);margin-left:2px;"></span>';
-                    // Syntax highlight only every 50 chars to save performance
-                    if (reply.length % 50 === 0) aiMsg.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
-                    smartScroll();
+                    aiMsg.innerHTML = marked.parse(reply);
+                    scrollToBottom();
                 });
-                aiMsg.innerHTML = marked.parse(reply); // Finalize
             }
-            
             chat.messages.push({ role: 'ai', content: reply });
             save();
             aiMsg.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
-            if(state.ttsEnabled) speak(reply);
-
-        } catch (e) {
-            if(e.name !== 'AbortError') aiMsg.innerHTML = `<span style="color:#b3261e">Error: ${e.message}</span>`;
-        } finally {
-            setGeneratingState(false);
+        } catch(e) {
+            aiMsg.innerHTML = `Error: ${e.message}`;
         }
     }
 
     // --- API ---
     async function streamGroq(key, msgs, onChunk) {
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST", headers: {"Authorization": `Bearer ${key}`, "Content-Type": "application/json"},
-            body: JSON.stringify({model: "llama-3.3-70b-versatile", messages: msgs, stream: true}),
-            signal: state.abortCtrl.signal
+            method: "POST", headers: {"Authorization":`Bearer ${key}`, "Content-Type":"application/json"},
+            body: JSON.stringify({model:"llama-3.3-70b-versatile", messages:msgs, stream:true}),
+            signal: state.abort.signal
         });
+        if(!res.ok) throw new Error("Groq API Error");
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         while(true) {
@@ -378,169 +227,68 @@
             const lines = decoder.decode(value).split('\n');
             for(const line of lines) {
                 if(line.startsWith('data: ') && line!=='data: [DONE]') {
-                    try { onChunk(JSON.parse(line.slice(6)).choices[0].delta.content || ""); } catch(e){}
+                    try { onChunk(JSON.parse(line.slice(6)).choices[0].delta.content||""); } catch(e){}
                 }
             }
         }
     }
 
     async function callVision(key, prompt, img) {
-        const res = await fetch("https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-11B-Vision-Instruct", {
-            method: "POST", headers: {"Authorization": `Bearer ${key}`, "Content-Type": "application/json"},
-            body: JSON.stringify({inputs: prompt, image: img, parameters:{max_new_tokens:512}})
+        // Fallback to simpler model if Llama Vision fails (often safer on free tier)
+        const res = await fetch("https://api-inference.huggingface.co/models/llava-hf/llava-1.5-7b-hf", {
+            method: "POST", headers: {"Authorization":`Bearer ${key}`, "Content-Type":"application/json"},
+            body: JSON.stringify({inputs: `User: ${prompt} \n<image>\nAssistant:`, image: img, parameters:{max_new_tokens:250}})
         });
         const d = await res.json();
-        return d[0]?.generated_text || "Error.";
+        return d[0]?.generated_text?.split('Assistant:')?.[1] || d[0]?.generated_text || "Could not analyze image.";
     }
 
     // --- UTILS ---
-    function appendMsg(role, text, img, isStream) {
-        document.getElementById('chatContainer').querySelector('div').style.display = 'none'; // Hide empty state
+    function appendMsg(role, text, img) {
+        document.getElementById('chatContainer').querySelector('div').style.display = 'none';
         const div = document.createElement('div');
         div.className = `message-wrapper ${role}`;
         div.innerHTML = `
             ${role==='ai'?'<div class="avatar"><span class="material-icons-round">smart_toy</span></div>':''}
             <div class="message ${role}">
-                ${img ? `<img src="${img}" style="max-width:100%; border-radius:10px; margin-bottom:10px;">` : ''}
-                ${isStream ? '...' : (role==='ai' ? marked.parse(text||"") : (text||"").replace(/\n/g,'<br>'))}
-            </div>
-        `;
+                ${img ? `<img src="${img}" style="max-width:100%;border-radius:10px;margin-bottom:10px;">` : ''}
+                ${marked.parse(text||"")}
+            </div>`;
         document.getElementById('chatContainer').appendChild(div);
-        smartScroll();
+        scrollToBottom();
         return div.querySelector('.message');
     }
 
-    function smartScroll() {
-        if (!state.userScrolledUp) {
-            const c = document.getElementById('chatContainer');
-            c.scrollTop = c.scrollHeight;
-        } else {
-            document.getElementById('scrollBtn').style.display = 'block';
-        }
-    }
-    
-    function scrollToBottom(force = false) {
-        const c = document.getElementById('chatContainer');
-        c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
-        if(force) {
-            state.userScrolledUp = false;
-            document.getElementById('scrollBtn').style.display = 'none';
-        }
-    }
-
-    function quickPrompt(text) {
-        haptics();
-        document.getElementById('userInput').value = text;
-        sendMessage();
-    }
-
-    function setGeneratingState(isGen) {
-        state.isGenerating = isGen;
-        const btn = document.getElementById('sendBtn');
-        const icon = document.getElementById('sendIcon');
-        if (isGen) {
-            btn.classList.add('stop-btn');
-            icon.innerText = 'stop';
-        } else {
-            btn.classList.remove('stop-btn');
-            icon.innerText = 'arrow_upward';
-        }
-    }
-
-    function stopGeneration() {
-        if(state.abortCtrl) state.abortCtrl.abort();
-        setGeneratingState(false);
-    }
-
-    function toggleTTS() {
-        state.ttsEnabled = !state.ttsEnabled;
-        const icon = document.getElementById('ttsToggle').querySelector('span');
-        icon.innerText = state.ttsEnabled ? 'volume_up' : 'volume_off';
-        document.getElementById('ttsToggle').classList.toggle('active');
-        if(!state.ttsEnabled) window.speechSynthesis.cancel();
-    }
-
-    function speak(text) {
-        const ut = new SpeechSynthesisUtterance(text.replace(/[*#`]/g, '')); // Strip MD
-        window.speechSynthesis.speak(ut);
-    }
-
-    function haptics() {
-        if(navigator.vibrate) navigator.vibrate(10);
-    }
-
-    // --- FILE & UI ---
     function handleFile() {
         const f = document.getElementById('fileInput').files[0];
         if(!f) return;
         const r = new FileReader();
         r.onload = (e) => {
-            state.attachment = {type: f.type.startsWith('image')?'image':'text', content: e.target.result};
+            state.file = {type: f.type, content: e.target.result};
             document.getElementById('filePreview').style.display = 'flex';
             document.getElementById('fileName').innerText = f.name;
         };
-        f.type.startsWith('image') ? r.readAsDataURL(f) : r.readAsText(f);
+        r.readAsDataURL(f);
     }
-    function clearFile() { state.attachment = null; document.getElementById('fileInput').value = ''; document.getElementById('filePreview').style.display = 'none'; }
-    
-    // --- HISTORY ---
-    function newChat() {
-        state.currentId = Date.now().toString();
-        state.chats.unshift({id: state.currentId, title: "New Chat", messages: []});
-        save();
-        document.getElementById('chatContainer').innerHTML = '<div style="text-align:center; margin-top:20vh; opacity:0.6;"><h1 style="color:var(--accent);">Assalamualaikum</h1><p>How can I help you today?</p></div>';
-        renderHistory();
-        if(window.innerWidth < 850) document.getElementById('sidebar').classList.remove('open');
-    }
-    
-    function renderHistory() {
-        const list = document.getElementById('historyList');
-        list.innerHTML = '';
+    function clearFile() { state.file = null; document.getElementById('fileInput').value = ''; document.getElementById('filePreview').style.display = 'none'; }
+    function newChat() { state.id = Date.now().toString(); state.chats.unshift({id:state.id, title:"New Chat", messages:[]}); save(); document.getElementById('chatContainer').innerHTML='<div style="text-align:center;margin-top:20vh;opacity:0.6;"><h1 style="color:var(--accent);">Assalamualaikum</h1><p>Ready to assist.</p></div>'; renderHist(); if(window.innerWidth<850)document.getElementById('sidebar').classList.remove('open'); }
+    function renderHist() {
+        const list = document.getElementById('historyList'); list.innerHTML='';
         state.chats.forEach(c => {
-            const el = document.createElement('div');
-            el.className = `history-item ${c.id === state.currentId ? 'active' : ''}`;
+            const el = document.createElement('div'); el.className = `history-item ${c.id===state.id?'active':''}`;
             el.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.title}</span><span class="material-icons-round del-btn" onclick="delChat('${c.id}', event)">delete</span>`;
-            el.onclick = (e) => { if(!e.target.classList.contains('del-btn')) loadChat(c.id); };
+            el.onclick = (e) => { if(!e.target.closest('.del-btn')) loadChat(c.id); };
             list.appendChild(el);
         });
     }
-
-    function loadChat(id) {
-        state.currentId = id;
-        const chat = state.chats.find(c => c.id === id);
-        document.getElementById('chatContainer').innerHTML = '';
-        chat.messages.forEach(m => appendMsg(m.role, m.content, m.image));
-        renderHistory();
-        if(window.innerWidth < 850) document.getElementById('sidebar').classList.remove('open');
-    }
-
-    function delChat(id, e) {
-        e.stopPropagation();
-        if(confirm("Delete this chat?")) {
-            state.chats = state.chats.filter(c => c.id !== id);
-            save();
-            state.chats.length ? loadChat(state.chats[0].id) : newChat();
-        }
-    }
-
+    function loadChat(id) { state.id=id; const c = state.chats.find(x=>x.id===id); document.getElementById('chatContainer').innerHTML=''; c.messages.forEach(m=>appendMsg(m.role,m.content,m.image)); renderHist(); if(window.innerWidth<850)document.getElementById('sidebar').classList.remove('open'); }
+    function delChat(id,e) { e.stopPropagation(); if(confirm("Delete?")){ state.chats=state.chats.filter(x=>x.id!==id); save(); state.chats.length?loadChat(state.chats[0].id):newChat(); } }
     function save() { localStorage.setItem('chats', JSON.stringify(state.chats)); }
-    function toggleSettings() { const el = document.getElementById('settingsOverlay'); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
-    function saveSettings() {
-        localStorage.setItem('groqKey', document.getElementById('groqKey').value);
-        localStorage.setItem('hfKey', document.getElementById('hfKey').value);
-        localStorage.setItem('sysPrompt', document.getElementById('sysPrompt').value);
-        toggleSettings();
-    }
-    function closeSidebar(e) {
-        if(window.innerWidth < 850 && document.getElementById('sidebar').classList.contains('open') && !e.target.closest('header')) {
-            document.getElementById('sidebar').classList.remove('open');
-        }
-    }
-
-    // Auto-resize Input
-    document.getElementById('userInput').addEventListener('input', function() {
-        this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 140) + 'px';
-    });
+    function scrollToBottom() { const c = document.getElementById('chatContainer'); c.scrollTop = c.scrollHeight; }
+    function toggleSettings() { const el = document.getElementById('settingsOverlay'); el.style.display = el.style.display==='flex'?'none':'flex'; }
+    function saveSettings() { localStorage.setItem('groqKey', document.getElementById('groqKey').value); localStorage.setItem('hfKey', document.getElementById('hfKey').value); localStorage.setItem('sysPrompt', document.getElementById('sysPrompt').value); toggleSettings(); }
+    function closeSidebar(e) { if(window.innerWidth<850 && document.getElementById('sidebar').classList.contains('open') && !e.target.closest('header')) document.getElementById('sidebar').classList.remove('open'); }
+    document.getElementById('userInput').addEventListener('input', function() { this.style.height='auto';this.style.height=Math.min(this.scrollHeight,140)+'px'; });
 
     init();
 </script>
