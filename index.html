@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#fdfbf7">
-    <meta name="description" content="AI Workspace">
+    <meta name="description" content="AI Workspace Pro">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>AI Workspace</title>
@@ -34,21 +34,22 @@
         @media (min-width: 850px) { #sidebar { position: relative; transform: translateX(0); } }
         #sidebar.open { transform: translateX(0); box-shadow: 100vw 0 0 rgba(0,0,0,0.2); }
         .sidebar-header { padding: 30px 20px 20px; }
-        .btn-new { width: 100%; padding: 14px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .btn-new { width: 100%; padding: 14px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition:0.2s; }
+        .btn-new:active { transform:scale(0.98); }
         .history-list { flex: 1; overflow-y: auto; padding: 10px 15px; }
         .history-item { padding: 12px; margin-bottom: 4px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
         .history-item.active { background: white; border: 1px solid var(--border); font-weight: 700; }
         .del-btn { opacity: 0; color: #b3261e; padding: 4px; }
         .history-item.active .del-btn { opacity: 1; }
-        
-        /* INSTALL BUTTON */
         #installBtn { display: none; width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; margin-top: 10px; cursor: pointer; justify-content: center; gap: 8px; }
 
         /* MAIN */
         .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
         header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--glass); backdrop-filter: blur(10px); z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.03); position: absolute; width: 100%; top:0; }
-        #chatContainer { flex: 1; overflow-y: auto; padding: 80px 5% 180px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; width: 100%; max-width: 900px; margin: 0 auto; }
+        .model-badge { font-size: 0.75rem; background: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: 20px; font-weight: 600; color: var(--text-muted); border: 1px solid var(--border); }
         
+        #chatContainer { flex: 1; overflow-y: auto; padding: 80px 5% 180px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; width: 100%; max-width: 900px; margin: 0 auto; }
+
         /* MESSAGES */
         .message-wrapper { display: flex; gap: 12px; opacity: 0; animation: fadeIn 0.3s forwards; }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
@@ -57,17 +58,29 @@
         .message { max-width: 85%; font-size: 1rem; line-height: 1.6; }
         .message.user { background: var(--bg-user); padding: 10px 16px; border-radius: 18px; border-top-right-radius: 4px; }
         .message.ai p { margin-top: 0; }
-        .message.ai pre { background: #1e1e1e; padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 0.9em; }
+        
+        /* CODE BLOCKS (Restored) */
+        .code-wrap { margin: 15px 0; border: 1px solid #333; border-radius: 10px; overflow: hidden; background: #1e1e1e; }
+        .code-head { display: flex; justify-content: space-between; padding: 8px 12px; background: #2d2d2d; color: #aaa; font-size: 0.75rem; font-family: var(--font-main); align-items: center; }
+        .copy-btn { background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 0.75rem; }
+        .copy-btn:hover { color: white; }
+        .message.ai pre { margin: 0; padding: 15px; overflow-x: auto; font-size: 0.9em; color: #fff; }
+        .message.ai code { font-family: var(--font-code); }
 
         /* INPUT AREA */
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, var(--bg-body) 90%, transparent); padding: 10px 20px calc(20px + var(--safe-bottom)); display: flex; flex-direction: column; gap: 10px; z-index: 20; }
-        .input-box { background: var(--bg-surface); border-radius: 26px; padding: 8px 14px; border: 1px solid var(--border); box-shadow: 0 5px 20px rgba(0,0,0,0.04); display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; width: 100%; }
+        .input-box { background: var(--bg-surface); border-radius: 26px; padding: 8px 14px; border: 1px solid var(--border); box-shadow: 0 5px 20px rgba(0,0,0,0.04); display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; width: 100%; transition: 0.2s; }
+        .input-box:focus-within { border-color: var(--accent); box-shadow: 0 8px 30px rgba(141, 123, 104, 0.15); }
         .file-preview { display: none; padding: 6px 10px; border-bottom: 1px solid var(--border); margin-bottom: 5px; font-size: 0.8rem; align-items: center; justify-content: space-between; }
         .main-input-row { display: flex; align-items: flex-end; gap: 8px; }
         textarea { width: 100%; background: transparent; border: none; padding: 12px 0; resize: none; outline: none; font-family: inherit; font-size: 1rem; max-height: 140px; }
         .icon-btn { background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-muted); border-radius: 50%; }
-        .send-btn { background: var(--accent); color: white; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; }
+        
+        /* SEND / STOP BUTTON */
+        .send-btn { background: var(--accent); color: white; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer; border: none; }
         .send-btn:active { transform: scale(0.9); }
+        .send-btn.stop { background: #b3261e; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* MODAL */
         #settingsOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); z-index: 2000; }
@@ -93,14 +106,14 @@
 <div class="main-content" onclick="closeSidebar(event)">
     <header>
         <button class="icon-btn" onclick="document.getElementById('sidebar').classList.toggle('open')"> <span class="material-icons-round">menu</span> </button>
-        <span style="font-weight:600;">Workspace</span>
+        <div class="model-badge" id="modelStatus">Ready</div>
         <button class="icon-btn" onclick="toggleSettings()"> <span class="material-icons-round">tune</span> </button>
     </header>
 
     <div id="chatContainer">
         <div style="text-align:center; margin-top:20vh; opacity:0.6;">
             <h1 style="color:var(--accent);">Assalamualaikum</h1>
-            <p>Ready to assist.</p>
+            <p>Ready to build.</p>
         </div>
     </div>
 
@@ -113,7 +126,7 @@
             <div class="main-input-row">
                 <button class="icon-btn" onclick="document.getElementById('fileInput').click()"> <span class="material-icons-round">attach_file</span> </button>
                 <textarea id="userInput" rows="1" placeholder="Type a message..."></textarea>
-                <button id="sendBtn" class="send-btn" onclick="send()"> <span class="material-icons-round">arrow_upward</span> </button>
+                <button id="sendBtn" class="send-btn" onclick="handleSend()"> <span class="material-icons-round" id="sendIcon">arrow_upward</span> </button>
             </div>
         </div>
     </div>
@@ -135,24 +148,33 @@
 </div>
 
 <script>
-    // --- PWA INSTALL ---
+    // --- PWA ---
     let deferredPrompt;
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); deferredPrompt = e;
-        document.getElementById('installBtn').style.display = 'flex';
-    });
-    async function installApp() {
-        if(!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if(outcome === 'accepted') document.getElementById('installBtn').style.display = 'none';
-        deferredPrompt = null;
-    }
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('installBtn').style.display = 'flex'; });
+    async function installApp() { if(deferredPrompt) { deferredPrompt.prompt(); const {outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('installBtn').style.display='none'; deferredPrompt=null; } }
+
+    // --- SETUP MARKED (CODE COPY) ---
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, lang) {
+        const language = lang || 'text';
+        const validLang = hljs.getLanguage(language) ? language : 'plaintext';
+        const highlighted = hljs.highlight(code, { language: validLang }).value;
+        return `
+        <div class="code-wrap">
+            <div class="code-head">
+                <span>${language}</span>
+                <button class="copy-btn" onclick="copyCode(this, \`${encodeURIComponent(code)}\`)">
+                    <span class="material-icons-round" style="font-size:14px">content_copy</span> Copy
+                </button>
+            </div>
+            <pre><code class="hljs ${validLang}">${highlighted}</code></pre>
+        </div>`;
+    };
+    marked.use({ renderer });
 
     // --- APP LOGIC ---
-    let state = { chats: JSON.parse(localStorage.getItem('chats')||'[]'), id: null, file: null, abort: null };
-    marked.setOptions({ highlight: (code) => hljs.highlightAuto(code).value });
+    let state = { chats: JSON.parse(localStorage.getItem('chats')||'[]'), id: null, file: null, abort: null, generating: false };
 
     function init() {
         document.getElementById('groqKey').value = localStorage.getItem('groqKey') || '';
@@ -161,42 +183,54 @@
         if(state.chats.length) renderHist(); else newChat();
     }
 
+    function handleSend() {
+        if (state.generating) {
+            // STOP LOGIC
+            if(state.abort) state.abort.abort();
+            setGenerating(false);
+        } else {
+            // SEND LOGIC
+            send();
+        }
+    }
+
     async function send() {
         const text = document.getElementById('userInput').value.trim();
         if(!text && !state.file) return;
 
-        // UI Update
-        const fileData = state.file; // Copy ref
+        setGenerating(true);
+        const fileData = state.file; 
         appendMsg('user', text, fileData?.content);
         document.getElementById('userInput').value = '';
         document.getElementById('userInput').style.height = 'auto';
         clearFile();
 
-        // Save Data
         if(!state.id) newChat();
         const chat = state.chats.find(c => c.id === state.id);
         chat.messages.push({ role: 'user', content: text, image: fileData?.content });
         if(chat.messages.length===1) { chat.title = text.slice(0,25); renderHist(); }
         save();
 
-        // API Call
         const aiMsg = appendMsg('ai', '...');
         const groqK = document.getElementById('groqKey').value;
         const hfK = document.getElementById('hfKey').value;
 
         try {
-            let reply = "";
             state.abort = new AbortController();
+            let reply = "";
 
             if (fileData && fileData.type.startsWith('image')) {
-                // Vision Logic
+                // VISION
+                document.getElementById('modelStatus').innerText = "Vision Processing...";
                 if(!hfK) throw new Error("Missing Hugging Face Key");
                 reply = await callVision(hfK, text || "Describe this", fileData.content);
                 aiMsg.innerHTML = marked.parse(reply);
             } else {
-                // Text Logic
+                // TEXT STREAM
+                document.getElementById('modelStatus').innerText = "Thinking...";
                 if(!groqK) throw new Error("Missing Groq Key");
                 const msgs = [{role:"system", content:document.getElementById('sysPrompt').value}, ...chat.messages.slice(-8).map(m=>({role:m.role, content:m.content}))];
+                
                 await streamGroq(groqK, msgs, (chunk) => {
                     reply += chunk;
                     aiMsg.innerHTML = marked.parse(reply);
@@ -205,9 +239,11 @@
             }
             chat.messages.push({ role: 'ai', content: reply });
             save();
-            aiMsg.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
         } catch(e) {
-            aiMsg.innerHTML = `Error: ${e.message}`;
+            if(e.name !== 'AbortError') aiMsg.innerHTML = `Error: ${e.message}`;
+        } finally {
+            setGenerating(false);
+            document.getElementById('modelStatus').innerText = "Ready";
         }
     }
 
@@ -218,7 +254,6 @@
             body: JSON.stringify({model:"llama-3.3-70b-versatile", messages:msgs, stream:true}),
             signal: state.abort.signal
         });
-        if(!res.ok) throw new Error("Groq API Error");
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         while(true) {
@@ -234,16 +269,29 @@
     }
 
     async function callVision(key, prompt, img) {
-        // Fallback to simpler model if Llama Vision fails (often safer on free tier)
         const res = await fetch("https://api-inference.huggingface.co/models/llava-hf/llava-1.5-7b-hf", {
             method: "POST", headers: {"Authorization":`Bearer ${key}`, "Content-Type":"application/json"},
-            body: JSON.stringify({inputs: `User: ${prompt} \n<image>\nAssistant:`, image: img, parameters:{max_new_tokens:250}})
+            body: JSON.stringify({inputs: `User: ${prompt} \n<image>\nAssistant:`, image: img, parameters:{max_new_tokens:300}}),
+            signal: state.abort.signal
         });
         const d = await res.json();
-        return d[0]?.generated_text?.split('Assistant:')?.[1] || d[0]?.generated_text || "Could not analyze image.";
+        return d[0]?.generated_text?.split('Assistant:')?.[1] || "Error.";
     }
 
     // --- UTILS ---
+    function setGenerating(isGen) {
+        state.generating = isGen;
+        const btn = document.getElementById('sendBtn');
+        const icon = document.getElementById('sendIcon');
+        if(isGen) {
+            btn.classList.add('stop');
+            icon.innerText = 'stop';
+        } else {
+            btn.classList.remove('stop');
+            icon.innerText = 'arrow_upward';
+        }
+    }
+
     function appendMsg(role, text, img) {
         document.getElementById('chatContainer').querySelector('div').style.display = 'none';
         const div = document.createElement('div');
@@ -259,6 +307,13 @@
         return div.querySelector('.message');
     }
 
+    function copyCode(btn, encoded) {
+        navigator.clipboard.writeText(decodeURIComponent(encoded));
+        const original = btn.innerHTML;
+        btn.innerHTML = `<span class="material-icons-round" style="font-size:14px">check</span> Copied`;
+        setTimeout(() => btn.innerHTML = original, 2000);
+    }
+
     function handleFile() {
         const f = document.getElementById('fileInput').files[0];
         if(!f) return;
@@ -270,8 +325,9 @@
         };
         r.readAsDataURL(f);
     }
+    
     function clearFile() { state.file = null; document.getElementById('fileInput').value = ''; document.getElementById('filePreview').style.display = 'none'; }
-    function newChat() { state.id = Date.now().toString(); state.chats.unshift({id:state.id, title:"New Chat", messages:[]}); save(); document.getElementById('chatContainer').innerHTML='<div style="text-align:center;margin-top:20vh;opacity:0.6;"><h1 style="color:var(--accent);">Assalamualaikum</h1><p>Ready to assist.</p></div>'; renderHist(); if(window.innerWidth<850)document.getElementById('sidebar').classList.remove('open'); }
+    function newChat() { state.id = Date.now().toString(); state.chats.unshift({id:state.id, title:"New Chat", messages:[]}); save(); document.getElementById('chatContainer').innerHTML='<div style="text-align:center;margin-top:20vh;opacity:0.6;"><h1 style="color:var(--accent);">Assalamualaikum</h1><p>Ready to build.</p></div>'; renderHist(); if(window.innerWidth<850)document.getElementById('sidebar').classList.remove('open'); }
     function renderHist() {
         const list = document.getElementById('historyList'); list.innerHTML='';
         state.chats.forEach(c => {
