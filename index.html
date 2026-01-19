@@ -3,21 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#fdfbf7">
-    <meta name="description" content="AI Workspace Pro">
-    <title>AI Workspace</title>
+    <title>AI Workspace Pro</title>
     
-    <link rel="manifest" href="./manifest.json">
-    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark-reasonable.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -25,124 +18,99 @@
             --bg-user: #e8e4dc; --text-main: #2d2a26; --text-muted: #8c8682;
             --accent: #8d7b68; --border: #e6e2dd; --glass: rgba(253, 251, 247, 0.95);
             --font-main: 'Plus Jakarta Sans', sans-serif; --font-code: 'JetBrains Mono', monospace;
-            --safe-bottom: env(safe-area-inset-bottom);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: var(--font-main); background: var(--bg-body); margin: 0; display: flex; height: 100vh; height: 100dvh; color: var(--text-main); overflow: hidden; }
+        body { font-family: var(--font-main); background: var(--bg-body); margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--text-main); }
 
-        /* UI STRUCTURE */
-        #sidebar { width: 280px; background: var(--bg-sidebar); display: flex; flex-direction: column; transition: transform 0.3s ease; position: absolute; height: 100%; z-index: 1000; transform: translateX(-100%); border-right: 1px solid var(--border); }
+        /* SIDEBAR */
+        #sidebar { width: 280px; background: var(--bg-sidebar); display: flex; flex-direction: column; position: absolute; height: 100%; z-index: 1000; transform: translateX(-100%); transition: 0.3s; border-right: 1px solid var(--border); }
         @media (min-width: 850px) { #sidebar { position: relative; transform: translateX(0); } }
         #sidebar.open { transform: translateX(0); box-shadow: 100vw 0 0 rgba(0,0,0,0.2); }
         
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--glass); backdrop-filter: blur(10px); z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.03); position: absolute; width: 100%; top:0; }
-        #chatContainer { flex: 1; overflow-y: auto; padding: 80px 5% 180px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; width: 100%; max-width: 900px; margin: 0 auto; }
+        .sidebar-header { padding: 30px 20px 0; }
+        .btn-new { width: 100%; padding: 14px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .history-list { flex: 1; overflow-y: auto; padding: 15px; }
 
-        /* COMPONENTS */
-        .btn-new { width: 100%; padding: 14px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
-        .btn-new:active { transform: scale(0.98); }
-        .history-list { flex: 1; overflow-y: auto; padding: 10px 15px; }
-        .history-item { padding: 12px; margin-bottom: 4px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
-        .history-item.active { background: white; border: 1px solid var(--border); font-weight: 700; }
-        .del-btn { opacity: 0; color: #b3261e; padding: 4px; }
-        .history-item.active .del-btn { opacity: 1; }
+        /* MAIN CONTENT */
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--glass); backdrop-filter: blur(10px); z-index: 10; border-bottom: 1px solid var(--border); position: absolute; top: 0; width: 100%; }
         
-        /* CHAT BUBBLES */
+        #chatContainer { flex: 1; overflow-y: auto; padding: 90px 5% 180px; scroll-behavior: smooth; display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
+
+        /* MESSAGES */
         .message-wrapper { display: flex; gap: 12px; opacity: 0; animation: fadeIn 0.3s forwards; }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
         .message-wrapper.user { justify-content: flex-end; }
-        .avatar { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 4px; }
-        .message { max-width: 85%; font-size: 1rem; line-height: 1.6; word-wrap: break-word; }
-        .message.user { background: var(--bg-user); padding: 10px 16px; border-radius: 18px; border-top-right-radius: 4px; }
-        .message.error { background: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; }
+        .avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+        .message { max-width: 85%; padding: 10px 16px; border-radius: 18px; font-size: 1rem; line-height: 1.6; position: relative; }
+        .message.user { background: var(--bg-user); border-top-right-radius: 4px; }
+        .message.ai { background: transparent; padding: 0 10px; }
         
-        /* CONTENT STYLING */
-        .message.ai p { margin-top: 0; }
-        .code-wrap { margin: 15px 0; border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #1e1e1e; }
-        .code-head { padding: 6px 12px; background: #2d2d2d; color: #aaa; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
-        .copy-btn { background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        pre { margin: 0; padding: 12px; overflow-x: auto; color: white; font-family: var(--font-code); }
-        .katex { font-size: 1.1em; }
+        /* CODE BLOCKS */
+        pre { background: #1e1e1e; padding: 15px; border-radius: 10px; overflow-x: auto; color: #d4d4d4; font-family: var(--font-code); margin: 10px 0; }
+        code { font-family: var(--font-code); font-size: 0.9em; }
+        p { margin-top: 0; }
 
         /* INPUT AREA */
-        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, var(--bg-body) 90%, transparent); padding: 10px 20px calc(20px + var(--safe-bottom)); z-index: 20; }
-        .input-box { background: var(--bg-surface); border-radius: 26px; padding: 8px 14px; border: 1px solid var(--border); box-shadow: 0 5px 20px rgba(0,0,0,0.04); display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; transition: 0.2s; }
-        .input-box:focus-within { border-color: var(--accent); box-shadow: 0 8px 30px rgba(141, 123, 104, 0.15); }
-        .file-preview { display: none; padding: 6px 10px; border-bottom: 1px solid var(--border); margin-bottom: 5px; font-size: 0.8rem; align-items: center; justify-content: space-between; }
-        .main-input-row { display: flex; align-items: flex-end; gap: 8px; }
-        textarea { width: 100%; background: transparent; border: none; padding: 12px 0; resize: none; outline: none; font-family: inherit; font-size: 1rem; max-height: 140px; }
+        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, var(--bg-body) 90%, transparent); padding: 20px; z-index: 20; }
+        .input-box { background: var(--bg-surface); border-radius: 24px; padding: 10px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto; transition: 0.2s; }
+        .input-box:focus-within { border-color: var(--accent); }
         
-        /* BUTTONS */
-        .icon-btn { background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-muted); border-radius: 50%; }
-        .icon-btn.recording { color: #b3261e; animation: pulse 1s infinite; background: rgba(179, 38, 30, 0.1); }
-        .send-btn { background: var(--accent); color: white; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: none; cursor: pointer; transition: 0.2s; }
-        .send-btn:active { transform: scale(0.9); }
-        .send-btn.stop { background: #b3261e; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .file-preview { display: none; padding: 8px 12px; background: #f5f5f5; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; align-items: center; justify-content: space-between; }
+        .input-row { display: flex; align-items: flex-end; gap: 8px; }
+        textarea { width: 100%; background: transparent; border: none; padding: 12px; resize: none; outline: none; font-family: inherit; font-size: 1rem; max-height: 150px; }
+        
+        .icon-btn { background: none; border: none; cursor: pointer; padding: 10px; color: var(--text-muted); border-radius: 50%; transition: 0.2s; }
+        .icon-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+        .send-btn { background: var(--accent); color: white; width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         /* SETTINGS MODAL */
-        #settingsOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); z-index: 2000; }
-        .modal { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; }
-        .field { margin-bottom: 15px; }
-        .field label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
-        .field input, .field textarea, .field select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; background: white; }
-        .required-field { border-color: #b3261e !important; background: #fff5f5; }
-
-        /* WELCOME & INSTALL */
-        .welcome-box { text-align: center; margin-top: 15vh; opacity: 0.8; }
-        .chip-container { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
-        .chip { background: white; border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
-        #installBtn { display: none; width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; margin-top: 10px; cursor: pointer; justify-content: center; gap: 8px; }
+        #settingsOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(5px); }
+        .modal { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .field { margin-bottom: 20px; }
+        .field label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; color: var(--text-muted); }
+        .field input, .field select, .field textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.95rem; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div style="padding: 30px 20px 0;">
-        <button class="btn-new" onclick="newChat()"> <span class="material-icons-round">add</span> New Chat </button>
+    <div class="sidebar-header">
+        <button class="btn-new" onclick="location.reload()"> <span class="material-icons-round">add</span> New Chat </button>
     </div>
-    <div class="history-list" id="historyList"></div>
+    <div class="history-list">
+        </div>
     <div style="padding: 20px; border-top: 1px solid var(--border);">
-        <button class="icon-btn" style="width:100%; border-radius:12px; display:flex; gap:10px; justify-content:flex-start; padding:12px; margin-bottom:5px;" onclick="exportChat()"> 
-            <span class="material-icons-round">save_alt</span> Export JSON 
+        <button class="icon-btn" style="width:100%; justify-content:flex-start; display:flex; gap:10px; border-radius:12px;" onclick="toggleSettings()">
+            <span class="material-icons-round">settings</span> Settings
         </button>
-        
-        <button id="installBtn" onclick="installApp()"> <span class="material-icons-round">download</span> Install App </button>
-        <button class="icon-btn" style="width:100%; border-radius:12px; display:flex; gap:10px; justify-content:flex-start; padding:12px;" onclick="toggleSettings()"> <span class="material-icons-round">settings</span> Settings </button>
     </div>
 </div>
 
-<div class="main-content" onclick="closeSidebar(event)">
+<div class="main-content">
     <header>
         <button class="icon-btn" onclick="document.getElementById('sidebar').classList.toggle('open')"> <span class="material-icons-round">menu</span> </button>
-        <span style="font-weight:600;">Workspace</span>
+        <span style="font-weight:600; font-size:1.1rem;">Gemini Workspace</span>
         <button class="icon-btn" onclick="toggleSettings()"> <span class="material-icons-round">tune</span> </button>
     </header>
 
     <div id="chatContainer">
-        <div class="welcome-box">
-            <h1 style="color:var(--accent);">Assalamualaikum</h1>
-            <p>What can I do for you?</p>
-            <div class="chip-container">
-                <div class="chip" onclick="quickFill('Debug this code')"><span class="material-icons-round" style="font-size:16px">bug_report</span> Debug</div>
-                <div class="chip" onclick="quickFill('Summarize this')"><span class="material-icons-round" style="font-size:16px">short_text</span> Summarize</div>
-                <div class="chip" onclick="quickFill('Explain this')"><span class="material-icons-round" style="font-size:16px">school</span> Explain</div>
-            </div>
+        <div style="text-align:center; margin-top:10vh; opacity:0.6;">
+            <h1 style="color:var(--accent);">Hello.</h1>
+            <p>I am ready to help you code, write, and create.</p>
         </div>
     </div>
 
     <div class="input-dock">
         <div class="input-box">
             <div class="file-preview" id="filePreview">
-                <span id="fileName">file</span>
-                <span class="material-icons-round" style="font-size:16px; cursor:pointer;" onclick="clearFile()">close</span>
+                <span id="fileName">image.png</span>
+                <span class="material-icons-round" style="cursor:pointer;" onclick="clearFile()">close</span>
             </div>
-            <div class="main-input-row">
+            <div class="input-row">
                 <button class="icon-btn" onclick="document.getElementById('fileInput').click()"> <span class="material-icons-round">attach_file</span> </button>
-                <textarea id="userInput" rows="1" placeholder="Type a message..."></textarea>
-                <button class="icon-btn" id="micBtn" onclick="toggleVoice()"> <span class="material-icons-round">mic</span> </button>
-                <button id="sendBtn" class="send-btn" onclick="handleSend()"> <span class="material-icons-round" id="sendIcon">arrow_upward</span> </button>
+                <textarea id="userInput" rows="1" placeholder="Type a message... (Enter to send)" onkeydown="checkEnter(event)"></textarea>
+                <button class="send-btn" onclick="handleSend()" id="sendBtn"> <span class="material-icons-round">arrow_upward</span> </button>
             </div>
         </div>
     </div>
@@ -156,21 +124,36 @@
             <h3>Settings</h3>
             <span class="material-icons-round" style="cursor:pointer;" onclick="toggleSettings()">close</span>
         </div>
-        
+
         <div class="field">
-            <label>AI Model</label>
+            <label>Google API Key (Required)</label>
+            <input type="password" id="apiKeyInput" placeholder="Paste your AI Studio Key here...">
+        </div>
+
+        <div class="field">
+            <label>Model Power</label>
             <select id="modelSelect">
-                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Smartest)</option>
-                <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fastest)</option>
-                <option value="mixtral-8x7b-32768">Mixtral 8x7b (Balanced)</option>
-                <option value="gemma2-9b-it">Gemma 2 9B (Google)</option>
-                <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 (Reasoning)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Smarter, 2 msgs/min)</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Faster, Unlimited)</option>
             </select>
         </div>
 
-        <div class="field"> <label>Groq API Key (Required)</label> <input type="password" id="groqKey" placeholder="gsk_..."> </div>
-        <div class="field"> <label>Hugging Face Key (Vision)</label> <input type="password" id="hfKey" placeholder="hf_..."> </div>
-        <div class="field"> <label>System Prompt</label> <textarea id="sysPrompt" rows="3">You are a helpful expert assistant. Use LaTeX ($$) for math.</textarea> </div>
+        <div class="field">
+            <label>AI Persona (Quick Select)</label>
+            <select id="personaSelect" onchange="applyPersona()">
+                <option value="default">Default Assistant</option>
+                <option value="coder">Senior Developer (Strict)</option>
+                <option value="tutor">Friendly Tutor (Explains simply)</option>
+                <option value="creative">Creative Writer</option>
+                <option value="malay">Malay Specialist (Bahasa Melayu)</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>System Instructions</label>
+            <textarea id="sysPrompt" rows="4" placeholder="How should the AI behave?"></textarea>
+        </div>
+
         <button class="btn-new" style="background:var(--accent); color:white; justify-content:center;" onclick="saveSettings()">Save Configuration</button>
     </div>
 </div>
